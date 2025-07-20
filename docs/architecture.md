@@ -7,7 +7,7 @@ traffic-management-dapp/
 │   ├── constants/                     # Hằng số và lỗi
 │   │   ├── Constants.sol             # Hằng số chung (thời gian, giới hạn,...)
 │   │   ├── Errors.sol                # Lỗi tùy chỉnh
-│   │   ├── Roles.sol                 # Vai trò (admin, agency, user,...)
+│   │   ├── Roles.sol                 # Vai trò (admin, govagency, user,...)
 │   │   ├── Success.sol               # Thông báo thành công (event messages)
 │   │   ├── NFTConstants.sol          # Hằng số liên quan đến NFT
 │   │   ├── ChainlinkConstants.sol    # Hằng số liên quan đến Chainlink
@@ -17,7 +17,7 @@ traffic-management-dapp/
 │   │   │   ├── VehicleFacet.sol       # Logic quản lý xe
 │   │   │   ├── InsuranceFacet.sol     # Logic quản lý bảo hiểm
 │   │   │   ├── InspectionFacet.sol    # Logic quản lý đăng kiểm
-│   │   │   ├── AgencyFacet.sol        # Logic quản lý tài khoản cơ quan
+│   │   │   ├── GovAgencyFacet.sol        # Logic quản lý tài khoản cơ quan
 │   │   │   ├── DiamondCutFacet.sol    # Facet quản lý nâng cấp
 │   │   │   ├── DiamondLoupeFacet.sol  # Facet tra cứu thông tin Diamond
 │   │   │   ├── OwnershipFacet.sol     # Facet quản lý quyền sở hữu
@@ -28,14 +28,14 @@ traffic-management-dapp/
 │   │   │   ├── VehicleStruct.sol
 │   │   │   ├── InsuranceStruct.sol
 │   │   │   ├── InspectionStruct.sol
-│   │   │   ├── AgencyStruct.sol
+│   │   │   ├── GovAgencyStruct.sol
 │   ├── interfaces/                    # Giao diện
 │   │   ├── external/                 # Giao diện cho bên ngoài
 │   │   │   ├── IDriverLicense.sol    # Giao diện cho bằng lái (NFT)
 │   │   │   ├── IVehicle.sol
 │   │   │   ├── IInsurance.sol
 │   │   │   ├── IInspection.sol
-│   │   │   ├── IAgency.sol
+│   │   │   ├── IGovAgency.sol
 │   │   │   ├── IChainLink.sol        # Giao diện cho Chainlink
 │   │   │   ├── IERC721.sol           # Chuẩn ERC-721 cho NFT
 │   │   │   ├── IERC721Metadata.sol   # Metadata cho NFT
@@ -74,7 +74,7 @@ traffic-management-dapp/
 │   ├── vehicle.test.js               # Test quản lý xe
 │   ├── insurance.test.js             # Test quản lý bảo hiểm
 │   ├── inspection.test.js            # Test quản lý đăng kiểm
-│   ├── agency.test.js                # Test quản lý cơ quan
+│   ├── govagency.test.js                # Test quản lý cơ quan
 │   ├── chainlink.test.js             # Test tích hợp Chainlink
 │   ├── nft.test.js                   # Test tích hợp NFT
 │   ├── diamond.test.js               # Test Diamond Pattern
