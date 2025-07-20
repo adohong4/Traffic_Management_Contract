@@ -1,0 +1,39 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.26;
+
+/**
+ * @title DateTime
+ * @dev Utility library for handling date and time calculations
+ */
+library DateTime {
+    // Number of seconds in a day
+    uint256 private constant SECONDS_PER_DAY = 86400;
+
+    /**
+     * @dev Checks if a timestamp is in the future
+     * @param timestamp The timestamp to check
+     * @return True if the timestamp is in the future
+     */
+    function isFuture(uint256 timestamp) internal view returns (bool) {
+        return timestamp > block.timestamp;
+    }
+
+    /**
+     * @dev Adds days to a timestamp
+     * @param timestamp The starting timestamp
+     * @param daysToAdd Number of days to add
+     * @return New timestamp
+     */
+    function addDays(uint256 timestamp, uint256 daysToAdd) internal pure returns (uint256) {
+        return timestamp + (daysToAdd * SECONDS_PER_DAY);
+    }
+
+    /**
+     * @dev Checks if a timestamp is expired
+     * @param expiryTimestamp The expiry timestamp
+     * @return True if expired
+     */
+    function isExpired(uint256 expiryTimestamp) internal view returns (bool) {
+        return block.timestamp > expiryTimestamp;
+    }
+}
