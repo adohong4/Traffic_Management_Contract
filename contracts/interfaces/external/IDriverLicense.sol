@@ -27,7 +27,8 @@ interface IDriverLicense {
         string memory name,
         string memory licenseType,
         uint256 expiryDate,
-        Enum.LicenseStatus status
+        Enum.LicenseStatus status,
+        uint256 point
     ) external;
 
     function renewLicense(string memory licenseNo, uint256 newExpiryDate) external;

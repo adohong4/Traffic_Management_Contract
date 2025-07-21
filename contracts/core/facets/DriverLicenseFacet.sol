@@ -91,4 +91,78 @@ abstract contract DriverLicenseFacet is IDriverLicense, IERC4671 {
         emit LicenseIssued(_licenseNo, _holderAddress, _issueDate);
         emit IERC4671.Issued(_holderAddress, tokenId);
     }
+
+    /**
+     * @dev Updates an existing license
+     */
+    function updateLicense(
+        string memory _licenseNo,
+        address _holderAddress,
+        string memory _name,
+        string memory _licenseType,
+        uint256 _expiryDate,
+        Enum.LicenseStatus _status,
+        uint256 _point
+    ) external override {
+        LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
+        LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
+
+        Validator.checkString(_licenseNo);
+        Validator.checkAddress(_holderAddress);
+        Validator.checkPoints(_point);
+        if (bytes(ls.licenses[_licenseNo].licenseNo).length == 0) revert Errors.NotFound();
+        if (_expiryDate < ls.licenses[_licenseNo].issueDate) revert Errors.InvalidInput();
+
+        DriverLicenseStruct.DriverLicense storage license = ls.licenses[_licenseNo];
+        bool wasValid = license.status == Enum.LicenseStatus.ACTIVE && !DateTime.isExpired(license.expiryDate);
+
+        // Update holder mappings if holder changes
+        if (license.holderAddress != _holderAddress) {
+            uint256 tokenId = license.tokenId;
+            _updateHolderMapping(tokenId, license.holderAddress, _holderAddress, wasValid);
+            license.holderAddress = _holderAddress;
+        }
+
+        // Update license data
+        license.name = _name;
+        license.licenseType = _licenseType;
+        license.expiryDate = _expiryDate;
+        license.status = _status;
+        license.point = _point;
+
+        // Update valid balance
+        bool isValid = _status == Enum.LicenseStatus.ACTIVE && !DateTime.isExpired(_expiryDate);
+        if (wasValid && !isValid) {
+            ls.validBalance[_holderAddress]--;
+        } else if (!wasValid && isValid) {
+            ls.validBalance[_holderAddress]++;
+        }
+
+        // Log success
+        Loggers.logSuccess("License updated successfully");
+
+        emit LicenseUpdated(_licenseNo, _expiryDate, _status);
+    }
+
+    /**
+     * @dev Internal function to update holder mappings when holder changes
+     */
+    function _updateHolderMapping(uint256 tokenId, address oldHolder, address newHolder, bool wasValid) private {
+        LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
+        uint256[] storage oldHolderTokens = ls.holderToTokenIds[oldHolder];
+        uint256 index = LibSharedFunctions.findIndex(oldHolderTokens, tokenId);
+        LibSharedFunctions.removeByIndex(oldHolderTokens, index);
+        if (oldHolderTokens.length == 0 && ls.validBalance[oldHolder] == 0) {
+            ls.holderCount--;
+        }
+        ls.holderToTokenIds[newHolder].push(tokenId);
+        ls.tokenToOwner[tokenId] = newHolder;
+        if (ls.holderToTokenIds[newHolder].length == 1) {
+            ls.holderCount++;
+        }
+        if (wasValid) {
+            ls.validBalance[oldHolder]--;
+            ls.validBalance[newHolder]++;
+        }
+    }
 }
