@@ -14,11 +14,9 @@ interface IDriverLicense {
         address holderAddress,
         string memory holderId,
         string memory name,
-        string memory dob,
         string memory licenseType,
         uint256 issueDate,
         uint256 expiryDate,
-        string memory ipfsHash,
         string memory authorityId,
         uint256 point
     ) external;
@@ -27,11 +25,9 @@ interface IDriverLicense {
         string memory licenseNo,
         address holderAddress,
         string memory name,
-        string memory dob,
         string memory licenseType,
         uint256 expiryDate,
-        Enum.LicenseStatus status,
-        string memory ipfsHash
+        Enum.LicenseStatus status
     ) external;
 
     function renewLicense(string memory licenseNo, uint256 newExpiryDate) external;

@@ -17,6 +17,7 @@ contract Errors {
     error DriverLicenseExpired(uint256 tokenId);
     error DriverLicenseNotValid(uint256 tokenId);
     error DriverAgeNotEligible(uint256 age);
+    error InvalidPointValue(uint256 point);
 
     // Vehicle errors
     error VehicleLimitReached(address owner);

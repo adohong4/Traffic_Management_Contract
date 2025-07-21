@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "../constants/Errors.sol";
+import "../constants/NFTConstants.sol";
 
 /**
  * @title Validator
@@ -30,5 +31,12 @@ library Validator {
      */
     function checkNonZero(uint256 value) internal pure {
         if (value == 0) revert Errors.InvalidInput();
+    }
+
+    /**
+     * @dev Validates driver license points
+     */
+    function checkPoints(uint256 point) internal pure {
+        if (point > 12) revert Errors.InvalidPointValue(point);
     }
 }

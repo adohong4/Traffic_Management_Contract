@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "../entities/structs/DriverLicenseStruct.sol";
-import "../constants/Constants.sol";
+import "../constants/Enum.sol";
 
 /**
  * @title LibStorage
@@ -14,13 +14,13 @@ library LibStorage {
 
     // Storage struct for driver licenses
     struct LicenseStorage {
-        mapping(string => DriverLicenseStruct.DriverLicense) licenses;
-        mapping(uint256 => string) tokenIdToLicenseId;
-        mapping(address => uint256[]) holderToTokenIds;
-        mapping(uint256 => address) tokenToOwner;
-        mapping(address => uint256) validBalance;
-        uint256 tokenCount;
-        uint256 holderCount;
+        mapping(string => DriverLicenseStruct.DriverLicense) licenses; // License data by licenseNo
+        mapping(uint256 => string) tokenIdToLicenseNo; // Map tokenId to licenseNo
+        mapping(address => uint256[]) holderToTokenIds; // Map holder to tokenIds
+        mapping(uint256 => address) tokenToOwner; // Map tokenId to owner
+        mapping(address => uint256) validBalance; // Number of valid tokens per owner
+        uint256 tokenCount; // Total number of issued tokens
+        uint256 holderCount; // Number of unique holders
     }
 
     /**
