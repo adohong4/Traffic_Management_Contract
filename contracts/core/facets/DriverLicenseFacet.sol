@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import "../../constants/Constants.sol";
 import "../../constants/Enum.sol";
 import "../../constants/Success.sol";
 import "../../constants/NFTConstants.sol";
@@ -234,9 +235,57 @@ abstract contract DriverLicenseFacet is IDriverLicense, IERC4671 {
     }
 
     /**
+     * IERC24 override
+     */
+
+    /**
      * @dev Returns the number of unique holders
      */
     function holdersCount() external view override returns (uint256) {
         return LibStorage.licenseStorage().holderCount;
+    }
+
+    /**
+     * @dev Returns the total number of issued tokens
+     */
+    function emittedCount() external view override returns (uint256) {
+        return LibStorage.licenseStorage().tokenCount;
+    }
+
+    /**
+     * @dev Checks if a token is valid
+     */
+    function isValid(uint256 tokenId) external view override returns (bool) {
+        LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
+        string memory licenseNo = ls.tokenIdToLicenseNo[tokenId];
+        if (bytes(licenseNo).length == 0) revert Errors.NotFound();
+        DriverLicenseStruct.DriverLicense memory license = ls.licenses[licenseNo];
+        return license.status == Enum.LicenseStatus.ACTIVE && !DateTime.isExpired(license.expiryDate);
+    }
+
+    /**
+     * @dev Returns the owner of a token
+     */
+    function ownerOf(uint256 tokenId) external view override returns (address) {
+        LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
+        address owner = ls.tokenToOwner[tokenId];
+        if (owner == address(0)) revert Errors.NotFound();
+        return owner;
+    }
+
+    /**
+     * @dev Returns the number of valid tokens for an owner
+     */
+    function balanceOf(address owner) external view override returns (uint256) {
+        Validator.checkAddress(owner);
+        return LibStorage.licenseStorage().validBalance[owner];
+    }
+
+    /**
+     * @dev Checks if an owner has at least one valid token
+     */
+    function hasValid(address owner) external view override returns (bool) {
+        Validator.checkAddress(owner);
+        return LibStorage.licenseStorage().validBalance[owner] > 0;
     }
 }

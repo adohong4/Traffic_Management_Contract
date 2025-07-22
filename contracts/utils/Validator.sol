@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import "../constants/Constants.sol";
 import "../constants/Errors.sol";
 import "../constants/NFTConstants.sol";
 
