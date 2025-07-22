@@ -21,7 +21,7 @@ import "../../interfaces/external/IDriverLicense.sol";
  * @title DriverLicenseFacet
  * @dev Manages driver licenses as ERC-4671 NFTs in the traffic management system
  */
-abstract contract DriverLicenseFacet is IDriverLicense, IERC4671 {
+contract DriverLicenseFacet is IDriverLicense, IERC4671 {
     // Events for ERC-4671
     event LicenseIssued(string indexed licenseNo, address indexed holder, uint256 issueDate);
     event LicenseUpdated(string indexed licenseNo, uint256 newExpiryDate, Enum.LicenseStatus newStatus);
@@ -225,6 +225,20 @@ abstract contract DriverLicenseFacet is IDriverLicense, IERC4671 {
             holderLicenses[i] = ls.licenses[ls.tokenIdToLicenseNo[tokenIds[i]]];
         }
         return holderLicenses;
+    }
+
+    /**
+     * @dev Retrieves a license by licenseNO
+     */
+    function getLicense(string memory _licenseNo)
+        external
+        view
+        override
+        returns (DriverLicenseStruct.DriverLicense memory)
+    {
+        LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
+        if (bytes(ls.licenses[_licenseNo].licenseNo).length == 0) revert Errors.NotFound();
+        return ls.licenses[_licenseNo];
     }
 
     /**

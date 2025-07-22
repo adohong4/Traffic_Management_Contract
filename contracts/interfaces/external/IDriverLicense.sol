@@ -31,7 +31,7 @@ interface IDriverLicense {
         uint256 point
     ) external;
 
-    function renewLicense(string memory licenseNo, uint256 newExpiryDate) external;
+    //function renewLicense(string memory licenseNo, uint256 newExpiryDate) external;
 
     function revokeLicense(string memory licenseNo) external;
 
