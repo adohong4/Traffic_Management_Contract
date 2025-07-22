@@ -165,4 +165,78 @@ abstract contract DriverLicenseFacet is IDriverLicense, IERC4671 {
             ls.validBalance[newHolder]++;
         }
     }
+
+    /**
+     * @dev Revokes a License
+     */
+    function revokeLicense(string memory _licenseNo) external override {
+        LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
+        LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
+
+        Validator.checkString(_licenseNo);
+        if (bytes(ls.licenses[_licenseNo].licenseNo).length == 0) revert Errors.NotFound();
+
+        DriverLicenseStruct.DriverLicense storage license = ls.licenses[_licenseNo];
+        bool wasValid = license.status == Enum.LicenseStatus.ACTIVE && !DateTime.isExpired(license.expiryDate);
+
+        license.status = Enum.LicenseStatus.REVOKED;
+        if (wasValid) {
+            ls.validBalance[license.holderAddress]--;
+        }
+
+        uint256 tokenId = license.tokenId;
+
+        // Log success
+        Loggers.logSuccess("License revoked successfully");
+
+        emit LicenseRevoked(_licenseNo, block.timestamp);
+        emit Revoked(license.holderAddress, tokenId);
+    }
+
+    /**
+     * @dev Get all licenses
+     */
+    function getAllLicenses() external view override returns (DriverLicenseStruct.DriverLicense[] memory) {
+        LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
+        DriverLicenseStruct.DriverLicense[] memory allLicenses = new DriverLicenseStruct.DriverLicense[](ls.tokenCount);
+        for (uint256 i = 0; i < ls.tokenCount; i++) {
+            allLicenses[i] = ls.licenses[ls.tokenIdToLicenseNo[i]];
+        }
+        return allLicenses;
+    }
+
+    /**
+     * @dev Retrieves licenses by holder address
+     */
+    function getLicensesByHolder(address _holderAddress)
+        external
+        view
+        override
+        returns (DriverLicenseStruct.DriverLicense[] memory)
+    {
+        Validator.checkAddress(_holderAddress);
+        LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
+        uint256[] memory tokenIds = ls.holderToTokenIds[_holderAddress];
+        DriverLicenseStruct.DriverLicense[] memory holderLicenses =
+            new DriverLicenseStruct.DriverLicense[](tokenIds.length);
+
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            holderLicenses[i] = ls.licenses[ls.tokenIdToLicenseNo[tokenIds[i]]];
+        }
+        return holderLicenses;
+    }
+
+    /**
+     * @dev Returns the total number of licenses
+     */
+    function getLicenseCount() external view override returns (uint256) {
+        return LibStorage.licenseStorage().tokenCount;
+    }
+
+    /**
+     * @dev Returns the number of unique holders
+     */
+    function holdersCount() external view override returns (uint256) {
+        return LibStorage.licenseStorage().holderCount;
+    }
 }
