@@ -36,4 +36,20 @@ library DateTime {
     function isExpired(uint256 expiryTimestamp) internal view returns (bool) {
         return block.timestamp > expiryTimestamp;
     }
+
+    /**
+     * @dev Get year the current timestamp
+     * @return Current timestamp
+     */
+    function getYear(uint256 timestamp) internal pure returns (uint256) {
+        return (timestamp / 31556926) + 1970; // approx 1 year = 365.24 days
+    }
+
+    /**
+     * @dev Get month the current timestamp
+     * @return Current timestamp
+     */
+    function getMonth(uint256 timestamp) internal pure returns (uint256) {
+        return (timestamp / 2629743) % 12 + 1; // approx month
+    }
 }

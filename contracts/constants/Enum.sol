@@ -9,4 +9,13 @@ contract Enum {
         REVOKED,
         EXPIRED
     }
+
+    enum Status {
+        PENDING,
+        APPROVED,
+        REJECTED,
+        PAUSED,
+        REVOKED,
+        COMPLETED
+    }
 }
