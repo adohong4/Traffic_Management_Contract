@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "../entities/structs/DriverLicenseStruct.sol";
+import "../entities/structs/OffenceAndRenewal.sol";
 import "../constants/Enum.sol";
 
 /**
@@ -11,6 +12,8 @@ import "../constants/Enum.sol";
 library LibStorage {
     // Storage position for driver license data
     bytes32 constant LICENSE_STORAGE_POSITION = keccak256("diamond.storage.DriverLicense");
+    // Storage position for offense and renewal data
+    bytes32 constant OFFENSE_RENEWAL_STORAGE_POSITION = keccak256("diamond.storage.OffenseRenewal");
 
     // Storage struct for driver licenses
     struct LicenseStorage {
@@ -31,6 +34,21 @@ library LibStorage {
         bytes32 position = LICENSE_STORAGE_POSITION;
         assembly {
             ls.slot := position
+        }
+    }
+
+    // Storage struct for offense and renewal data
+    struct OffenseRenewalStorage {
+        mapping(string => OffenceAndRenewalStruct.Offence[]) licenseToOffences; // Map licenseNo to list of offences
+    }
+
+    /**
+     * @dev Returns the offense and renewal storage
+     */
+    function offenseRenewalStorage() internal pure returns (OffenseRenewalStorage storage ors) {
+        bytes32 position = OFFENSE_RENEWAL_STORAGE_POSITION;
+        assembly {
+            ors.slot := position
         }
     }
 }

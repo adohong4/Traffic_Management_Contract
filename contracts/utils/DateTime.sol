@@ -30,11 +30,11 @@ library DateTime {
 
     /**
      * @dev Checks if a timestamp is expired
-     * @param expiryTimestamp The expiry timestamp
+     * @param expiryDate The expiry timestamp
      * @return True if expired
      */
-    function isExpired(uint256 expiryTimestamp) internal view returns (bool) {
-        return block.timestamp > expiryTimestamp;
+    function isExpired(uint256 expiryDate) internal view returns (bool) {
+        return expiryDate < block.timestamp;
     }
 
     /**

@@ -54,4 +54,20 @@ interface IOffenceRenewal {
         external
         view
         returns (OffenceAndRenewalStruct.Offence[] memory);
+
+    /**
+     * @notice Resets points to 12 for all licenses with point > 0 and status == ACTIVE.
+     */
+    function resetPointsToMax() external;
+
+    /**
+     * @notice Renews a license by extending expiryDate based on licenseType and bonusTime.
+     * @param _licenseNo The license number to renew.
+     */
+    function renewLicense(string memory _licenseNo) external;
+
+    /**
+     * @notice Updates status of all licenses based on expiryDate.
+     */
+    function updateAllLicenseStatuses() external;
 }
