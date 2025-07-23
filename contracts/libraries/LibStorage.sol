@@ -40,6 +40,9 @@ library LibStorage {
     // Storage struct for offense and renewal data
     struct OffenseRenewalStorage {
         mapping(string => OffenceAndRenewalStruct.Offence[]) licenseToOffences; // Map licenseNo to list of offences
+        mapping(string => bool) licenseTypeExists; // Check if license type exists
+        mapping(string => OffenceAndRenewalStruct.RenewLicense) renewRules; // Renewal rules by license type
+        string[] licenseTypes; // List of license types
     }
 
     /**

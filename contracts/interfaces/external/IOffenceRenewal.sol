@@ -8,6 +8,13 @@ import "../../entities/structs/OffenceAndRenewal.sol";
  * @dev Interface for managing driver license offenses and renewal rules.
  */
 interface IOffenceRenewal {
+    // Events
+    event AddRenewRule(string indexed _licenseType, uint256 _bonusTime);
+    event RevokeRenewRule(string indexed _licenseType);
+    event PointsUpdated(string licenseNo, int256 newPoints);
+    event LicenseRenewed(string licenseNo, uint256 newExpiryDate);
+    event LicenseStatusUpdated(string indexed licenseNo, Enum.LicenseStatus newStatus);
+
     /**
      * @notice Adds a renewal rule for a specific license type.
      * @param _licenseType The type of driver license (e.g., A1, B2).

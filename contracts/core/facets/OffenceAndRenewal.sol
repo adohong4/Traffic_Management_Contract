@@ -4,43 +4,41 @@ pragma solidity ^0.8.26;
 import "./DriverLicenseFacet.sol";
 import "../../interfaces/external/IOffenceRenewal.sol";
 import "../../entities/structs/OffenceAndRenewal.sol";
+import "../../utils/DateTime.sol";
+import "../../libraries/LibStorage.sol";
+import "../../libraries/LibAccessControl.sol";
+import "../../utils/Validator.sol";
+import "../../utils/Loggers.sol";
 
-abstract contract PenaltyAndRenewal is DriverLicenseFacet, IOffenceRenewal {
-    mapping(string => bool) public licenseTypeExists;
-    mapping(string => OffenceAndRenewalStruct.RenewLicense) public renewRules;
-    string[] public licenseTypes;
-
-    event AddRenewRule(string indexed _licenseType, uint256 _bonusTime);
-    event RevokeRenewRule(string indexed _licenseType);
-    event PointsUpdated(string licenseNo, int256 newPoints);
-    event LicenseRenewed(string licenseNo, uint256 newExpiryDate);
-    event LicenseStatusUpdated(string indexed licenseNo, Enum.LicenseStatus newStatus);
-
-    function addRenewRule(string memory _licenseType, uint256 _bonusTime, string memory _description)
+abstract contract OffenceAndRenewal is DriverLicenseFacet, IOffenceRenewal {
+    /**
+     * @dev Adds a renewal rule for a specific license type
+     */
+    function addRenewRule(string calldata _licenseType, uint256 _bonusTime, string calldata _description)
         external
         override
     {
         LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
+        LibStorage.OffenseRenewalStorage storage ors = LibStorage.offenseRenewalStorage();
 
         // Validate inputs
         Validator.checkString(_licenseType);
         Validator.checkNonZero(_bonusTime);
         Validator.checkString(_description);
 
-        require(!licenseTypeExists[_licenseType], "License type already exists");
+        require(!ors.licenseTypeExists[_licenseType], "License type already exists");
 
-        // Create and store the renewal rule
-        OffenceAndRenewalStruct.RenewLicense memory newRule = OffenceAndRenewalStruct.RenewLicense({
+        ors.renewRules[_licenseType] = OffenceAndRenewalStruct.RenewLicense({
             licenseType: _licenseType,
             bonusTime: _bonusTime,
             description: _description,
             status: Enum.Status.ACTIVE
         });
-        licenseTypeExists[_licenseType] = true;
-        licenseTypes.push(_licenseType);
+        ors.licenseTypeExists[_licenseType] = true;
+        ors.licenseTypes.push(_licenseType);
 
         // Log success
-        Loggers.logSuccess("License issued successfully");
+        Loggers.logSuccess("Renew rule added successfully");
 
         // Emit event
         emit AddRenewRule(_licenseType, _bonusTime);
@@ -50,11 +48,13 @@ abstract contract PenaltyAndRenewal is DriverLicenseFacet, IOffenceRenewal {
      * @dev Retrieves all defined renewal rules
      */
     function getAllRenewRules() external view override returns (OffenceAndRenewalStruct.RenewLicense[] memory) {
+        LibStorage.OffenseRenewalStorage storage ors = LibStorage.offenseRenewalStorage();
+        uint256 len = ors.licenseTypes.length;
         uint256 count = 0;
-        uint256 len = licenseTypes.length;
 
+        // Count rule active
         for (uint256 i = 0; i < len;) {
-            if (renewRules[licenseTypes[i]].status == Enum.Status.ACTIVE) {
+            if (ors.renewRules[ors.licenseTypes[i]].status == Enum.Status.ACTIVE) {
                 count++;
             }
             unchecked {
@@ -65,9 +65,9 @@ abstract contract PenaltyAndRenewal is DriverLicenseFacet, IOffenceRenewal {
         OffenceAndRenewalStruct.RenewLicense[] memory activeRules = new OffenceAndRenewalStruct.RenewLicense[](count);
         uint256 index = 0;
         for (uint256 i = 0; i < len;) {
-            string memory licenseType = licenseTypes[i];
-            if (renewRules[licenseType].status == Enum.Status.ACTIVE) {
-                activeRules[index] = renewRules[licenseType];
+            string memory licenseType = ors.licenseTypes[i];
+            if (ors.renewRules[licenseType].status == Enum.Status.ACTIVE) {
+                activeRules[index] = ors.renewRules[licenseType];
                 index++;
             }
             unchecked {
@@ -87,8 +87,9 @@ abstract contract PenaltyAndRenewal is DriverLicenseFacet, IOffenceRenewal {
         returns (OffenceAndRenewalStruct.RenewLicense memory)
     {
         Validator.checkString(_licenseType);
-        require(licenseTypeExists[_licenseType], "License type does not exist");
-        return renewRules[_licenseType];
+        LibStorage.OffenseRenewalStorage storage ors = LibStorage.offenseRenewalStorage();
+        require(ors.licenseTypeExists[_licenseType], "License type does not exist");
+        return ors.renewRules[_licenseType];
     }
 
     /**
@@ -96,18 +97,19 @@ abstract contract PenaltyAndRenewal is DriverLicenseFacet, IOffenceRenewal {
      */
     function revokeRenewRule(string calldata _licenseType) external override {
         LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
+        LibStorage.OffenseRenewalStorage storage ors = LibStorage.offenseRenewalStorage();
 
         Validator.checkString(_licenseType);
-        require(licenseTypeExists[_licenseType], "License type does not exist");
+        require(ors.licenseTypeExists[_licenseType], "License type does not exist");
 
-        renewRules[_licenseType].status = Enum.Status.REVOKED;
-        licenseTypeExists[_licenseType] = false;
+        ors.renewRules[_licenseType].status = Enum.Status.REVOKED;
+        ors.licenseTypeExists[_licenseType] = false;
 
         emit RevokeRenewRule(_licenseType);
     }
 
     /**
-     * @dev Deducts points from a license based on an offense
+     * @dev Deducts points from a license based on an offense and stores the offense
      */
     function deductPoint(string calldata _licenseNo, OffenceAndRenewalStruct.Offence calldata _offence)
         external
@@ -115,6 +117,7 @@ abstract contract PenaltyAndRenewal is DriverLicenseFacet, IOffenceRenewal {
     {
         LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
+        LibStorage.OffenseRenewalStorage storage ors = LibStorage.offenseRenewalStorage();
 
         Validator.checkString(_licenseNo);
         Validator.checkString(_offence.errorId);
@@ -123,17 +126,33 @@ abstract contract PenaltyAndRenewal is DriverLicenseFacet, IOffenceRenewal {
         DriverLicenseStruct.DriverLicense storage license = ls.licenses[_licenseNo];
         require(license.status == Enum.LicenseStatus.ACTIVE, "License is not active");
 
+        ors.licenseToOffences[_licenseNo].push(_offence);
+
         int256 newPoints = int256(license.point) - int256(_offence.point);
         license.point = newPoints > 0 ? uint256(newPoints) : 0;
 
         if (license.point == 0) {
-            license.status = Enum.LicenseStatus.REVOKED;
+            license.status = Enum.LicenseStatus.SUSPENDED;
         }
 
-        // Log the offense
+        // Log success
         Loggers.logSuccess("Point deducted successfully");
 
         emit PointsUpdated(_licenseNo, newPoints);
+    }
+
+    /**
+     * @dev Retrieves all offenses recorded for a specific license
+     */
+    function getErrorIdByLicenseNo(string calldata _licenseNo)
+        external
+        view
+        override
+        returns (OffenceAndRenewalStruct.Offence[] memory)
+    {
+        Validator.checkString(_licenseNo);
+        LibStorage.OffenseRenewalStorage storage ors = LibStorage.offenseRenewalStorage();
+        return ors.licenseToOffences[_licenseNo];
     }
 
     /**
@@ -142,7 +161,6 @@ abstract contract PenaltyAndRenewal is DriverLicenseFacet, IOffenceRenewal {
     function resetPointsToMax() external override {
         LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
-
         uint256 tokenCount = ls.tokenCount;
 
         for (uint256 i = 0; i < tokenCount;) {
@@ -166,15 +184,16 @@ abstract contract PenaltyAndRenewal is DriverLicenseFacet, IOffenceRenewal {
     function renewLicense(string calldata _licenseNo) external override {
         LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
+        LibStorage.OffenseRenewalStorage storage ors = LibStorage.offenseRenewalStorage();
 
         Validator.checkString(_licenseNo);
         require(bytes(ls.licenses[_licenseNo].licenseNo).length != 0, "License not found");
 
         DriverLicenseStruct.DriverLicense storage license = ls.licenses[_licenseNo];
         require(license.status == Enum.LicenseStatus.ACTIVE, "License is not active");
-        require(licenseTypeExists[license.licenseType], "No renewal rule for this license type");
+        require(ors.licenseTypeExists[license.licenseType], "No renewal rule for this license type");
 
-        OffenceAndRenewalStruct.RenewLicense memory rule = renewRules[license.licenseType];
+        OffenceAndRenewalStruct.RenewLicense memory rule = ors.renewRules[license.licenseType];
         require(rule.status == Enum.Status.ACTIVE, "Renewal rule is not active");
 
         // Renewal expiryDate: bonusTime * 1 year (1 year = 365 days = 31536000 seconds)
@@ -207,7 +226,7 @@ abstract contract PenaltyAndRenewal is DriverLicenseFacet, IOffenceRenewal {
             string memory licenseNo = ls.tokenIdToLicenseNo[i];
             DriverLicenseStruct.DriverLicense storage license = ls.licenses[licenseNo];
 
-            // checked if expiryDate < today => SUSPENDED
+            // if expiryDate < today => SUSPENDED
             if (DateTime.isExpired(license.expiryDate) && license.status != Enum.LicenseStatus.REVOKED) {
                 if (license.status == Enum.LicenseStatus.ACTIVE) {
                     ls.validBalance[license.holderAddress]--;
@@ -215,7 +234,7 @@ abstract contract PenaltyAndRenewal is DriverLicenseFacet, IOffenceRenewal {
                 license.status = Enum.LicenseStatus.SUSPENDED;
                 emit LicenseStatusUpdated(licenseNo, Enum.LicenseStatus.SUSPENDED);
             }
-            // checked if expiryDate > 1 year && status == SUSPENDED => REVOKED
+            // If expiryDate + 1 year < today and status == SUSPENDED => REVOKED
             else if (license.status == Enum.LicenseStatus.SUSPENDED && license.expiryDate + oneYear < currentTime) {
                 license.status = Enum.LicenseStatus.REVOKED;
                 emit LicenseStatusUpdated(licenseNo, Enum.LicenseStatus.REVOKED);
@@ -227,19 +246,5 @@ abstract contract PenaltyAndRenewal is DriverLicenseFacet, IOffenceRenewal {
         }
 
         Loggers.logSuccess("All license statuses updated");
-    }
-
-    /**
-     * @dev Retrieves all offenses for a license (not implemented as no offense storage is provided)
-     */
-    function getErrorIdByLicenseNo(string calldata _licenseNo)
-        external
-        view
-        override
-        returns (OffenceAndRenewalStruct.Offence[] memory)
-    {
-        Validator.checkString(_licenseNo);
-        LibStorage.OffenseRenewalStorage storage ors = LibStorage.offenseRenewalStorage();
-        return ors.licenseToOffences[_licenseNo];
     }
 }
