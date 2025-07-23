@@ -36,6 +36,7 @@ library Validator {
 
     /**
      * @dev Validates driver license points
+     * @param point The point to validate
      */
     function checkPoints(uint256 point) internal pure {
         if (point > 12) revert Errors.InvalidPointValue(point);

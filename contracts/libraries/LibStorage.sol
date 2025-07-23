@@ -19,6 +19,7 @@ library LibStorage {
         mapping(address => uint256[]) holderToTokenIds; // Map holder to tokenIds
         mapping(uint256 => address) tokenToOwner; // Map tokenId to owner
         mapping(address => uint256) validBalance; // Number of valid tokens per owner
+        mapping(string => uint256) licenseNoToTokenId; // Map licenseNo to tokenId
         uint256 tokenCount; // Total number of issued tokens
         uint256 holderCount; // Number of unique holders
     }

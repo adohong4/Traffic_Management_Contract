@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import "../../entities/structs/OffenseAndRenewal.sol";
+import "../../entities/structs/OffenceAndRenewal.sol";
 
 /**
  * @title IOffenceRenewal
@@ -10,11 +10,11 @@ import "../../entities/structs/OffenseAndRenewal.sol";
 interface IOffenceRenewal {
     /**
      * @notice Adds a renewal rule for a specific license type.
-     * @param licenseType The type of driver license (e.g., A1, B2).
-     * @param bonusTime Additional time (in seconds) to be added upon renewal.
-     * @param description Description of the renewal rule.
+     * @param _licenseType The type of driver license (e.g., A1, B2).
+     * @param _bonusTime Additional time (in seconds) to be added upon renewal.
+     * @param _description Description of the renewal rule.
      */
-    function addRenewRule(string memory licenseType, uint256 bonusTime, string memory description) external;
+    function addRenewRule(string memory _licenseType, uint256 _bonusTime, string memory _description) external;
 
     /**
      * @notice Retrieves all defined renewal rules.
@@ -36,14 +36,7 @@ interface IOffenceRenewal {
      * @notice Revokes (removes) the renewal rule for a given license type.
      * @param _licenseType The license type whose rule should be revoked.
      */
-    function RevokeRenewRule(string memory _licenseType) external;
-
-    /**
-     * @notice Defines a new type of offense.
-     * @param errorId The identifier/code of the offense (e.g., "ERROR001").
-     * @param point The number of points to be deducted (not negative).
-     */
-    function addOffence(string memory errorId, int256 point) external;
+    function revokeRenewRule(string memory _licenseType) external;
 
     /**
      * @notice Applies a recorded offense to a specific license and deducts points accordingly.

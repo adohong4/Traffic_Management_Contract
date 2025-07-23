@@ -14,6 +14,7 @@ contract Enum {
         PENDING,
         APPROVED,
         REJECTED,
+        ACTIVE,
         PAUSED,
         REVOKED,
         COMPLETED
