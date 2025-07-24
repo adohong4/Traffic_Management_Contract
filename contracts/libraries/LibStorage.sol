@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import "../entities/structs/DriverLicenseStruct.sol";
 import "../entities/structs/OffenceAndRenewal.sol";
+import "../entities/structs/GovAgencyStruct.sol";
 import "../constants/Enum.sol";
 
 /**
@@ -10,10 +11,30 @@ import "../constants/Enum.sol";
  * @dev Library for managing storage in the traffic management system
  */
 library LibStorage {
+    // Storage position for government agency data
+    bytes32 constant GOV_AGENCY_STORAGE_POSITION = keccak256("diamond.storage.GovAgency");
     // Storage position for driver license data
     bytes32 constant LICENSE_STORAGE_POSITION = keccak256("diamond.storage.DriverLicense");
     // Storage position for offense and renewal data
     bytes32 constant OFFENSE_RENEWAL_STORAGE_POSITION = keccak256("diamond.storage.OffenseRenewal");
+
+    // Storage struct for government agency data
+    struct GovAgencyStorage {
+        mapping(string => GovAgencyStruct.GovAgency) agencies; // Agency data by agencyId
+        mapping(address => string[]) addressToAgencyIds; // Map address to list of agencyIds
+        string[] agencyIds; // List of all agency IDs
+        uint256 agencyCount; // Total number of agencies
+    }
+
+    /**
+     * @dev Returns the government agency storage
+     */
+    function govAgencyStorage() internal pure returns (GovAgencyStorage storage gas) {
+        bytes32 position = GOV_AGENCY_STORAGE_POSITION;
+        assembly {
+            gas.slot := position
+        }
+    }
 
     // Storage struct for driver licenses
     struct LicenseStorage {
