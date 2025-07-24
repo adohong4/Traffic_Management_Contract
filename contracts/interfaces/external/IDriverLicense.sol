@@ -10,48 +10,16 @@ import "../../entities/structs/DriverLicenseStruct.sol";
  */
 interface IDriverLicense {
     /**
-     * @notice Issues a new driver license to a holder.
-     * @param licenseNo Unique license number.
-     * @param holderAddress Address of the license holder (owner).
-     * @param holderId National ID or citizen ID of the holder.
-     * @param name Full name of the license holder.
-     * @param licenseType Type/category of the license (e.g., A1, B2).
-     * @param issueDate Unix timestamp of license issuance.
-     * @param expiryDate Unix timestamp of license expiration.
-     * @param authorityId ID of the issuing government authority.
-     * @param point Initial point value assigned to the license.
+     * @notice Issues a new driver license, creating a new NFT and storing the license details.
+     * @param input Struct containing all necessary information to issue a license.
      */
-    function issueLicense(
-        string memory licenseNo,
-        address holderAddress,
-        string memory holderId,
-        string memory name,
-        string memory licenseType,
-        uint256 issueDate,
-        uint256 expiryDate,
-        string memory authorityId,
-        uint256 point
-    ) external;
+    function issueLicense(DriverLicenseStruct.LicenseInput calldata input) external;
 
     /**
-     * @notice Updates license information such as type, name, status, expiry, and point.
-     * @param licenseNo License number to update.
-     * @param holderAddress New holder address (if changed).
-     * @param name Updated full name of the holder.
-     * @param licenseType Updated license type/category.
-     * @param expiryDate New expiry date of the license.
-     * @param status Updated status of the license (ACTIVE, REVOKED, etc.).
-     * @param point Updated point balance.
+     * @notice Updates an existing driver license, modifying its details and status.
+     * @param input Struct containing updated information for the license.
      */
-    function updateLicense(
-        string memory licenseNo,
-        address holderAddress,
-        string memory name,
-        string memory licenseType,
-        uint256 expiryDate,
-        Enum.LicenseStatus status,
-        uint256 point
-    ) external;
+    function updateLicense(DriverLicenseStruct.LicenseUpdateInput calldata input) external;
 
     /**
      * @notice Revokes an active driver license, changing its status to REVOKED.

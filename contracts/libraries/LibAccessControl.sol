@@ -18,4 +18,25 @@ library LibAccessControl {
             revert Errors.NotAuthorized(msg.sender);
         }
     }
+
+    /**
+     * @dev Enforces access for ADMIN_ROLE or GOV_AGENCY_ROLE
+     * @param accessControl The AccessControl contract instance
+     */
+    function enforceAdminOrGovAgency(AccessControl accessControl) internal view {
+        if (
+            !accessControl.hasRole(accessControl.ADMIN_ROLE(), msg.sender)
+                && !accessControl.hasRole(accessControl.GOV_AGENCY_ROLE(), msg.sender)
+        ) {
+            revert Errors.NotAuthorized(msg.sender);
+        }
+    }
+
+    /**
+     * @dev Modifier to restrict access to ADMIN_ROLE or GOV_AGENCY_ROLE
+     */
+    modifier onlyAdminOrGovAgency(AccessControl accessControl) {
+        enforceAdminOrGovAgency(accessControl);
+        _;
+    }
 }

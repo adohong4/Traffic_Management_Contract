@@ -17,4 +17,26 @@ library DriverLicenseStruct {
         string authorityId; // ID cơ quan chức năng
         uint256 point; // 0 <= point <= 12
     }
+
+    struct LicenseInput {
+        string licenseNo;
+        address holderAddress;
+        string holderId;
+        string name;
+        string licenseType;
+        uint256 issueDate;
+        uint256 expiryDate;
+        string authorityId;
+        uint256 point;
+    }
+
+    struct LicenseUpdateInput {
+        string licenseNo;
+        address holderAddress;
+        string name;
+        string licenseType;
+        uint256 expiryDate;
+        Enum.LicenseStatus status;
+        uint256 point;
+    }
 }
