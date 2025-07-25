@@ -19,12 +19,24 @@ interface IGovAgency {
      * @notice Updates an existing government agency, modifying its details and status.
      * @param input Struct containing updated information for the agency.
      */
-    function updateAgency(string memory agencyId, GovAgencyStruct.AgencyUpdateInput calldata input) external;
+    function updateAgency(string memory _agencyId, GovAgencyStruct.AgencyUpdateInput calldata input) external;
 
     /**
      * @notice Retrieves agency details by agency ID.
-     * @param agencyId Agency ID to query.
+     * @param _agencyId Agency ID to query.
      * @return A struct containing full agency information.
      */
-    function getAgency(string memory agencyId) external view returns (GovAgencyStruct.GovAgency memory);
+    function getAgency(string memory _agencyId) external view returns (GovAgencyStruct.GovAgency memory);
+
+    /**
+     * @notice Revokes an existing government agency, setting its status to REVOKED.
+     * @param _agencyId The ID of the agency to revoke.
+     */
+    function revokeAgency(string calldata _agencyId) external;
+
+    /**
+     * @notice Retrieves all government agencies.
+     * @return An array of structs containing information for all agencies.
+     */
+    function getAllAgencies() external view returns (GovAgencyStruct.GovAgency[] memory);
 }

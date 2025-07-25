@@ -121,7 +121,7 @@ contract GovAgencyFacet is IGovAgency {
      * @notice Revokes an existing government agency, setting its status to REVOKED.
      * @param _agencyId The ID of the agency to revoke.
      */
-    function revokeAgency(string calldata _agencyId) external {
+    function revokeAgency(string calldata _agencyId) external override {
         LibAccessControl.enforceAdminOrGovAgency(accessControl);
 
         LibStorage.GovAgencyStorage storage gas = LibStorage.govAgencyStorage();
