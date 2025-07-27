@@ -19,4 +19,11 @@ contract Enum {
         REVOKED,
         COMPLETED
     }
+
+    enum ColorPlate {
+        WHITE,
+        YELLOW,
+        BLUE,
+        RED
+    }
 }

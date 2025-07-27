@@ -26,7 +26,7 @@ library VehicleRegistrationStruct {
         string vehicleModel;
         string chassisNo;
         string vehiclePlateNo;
-        uint256 colorPlate; // 0: White, 1: Yellow, 2: Green, 3: Blue, 4: Red
+        Enum.ColorPlate colorPlate; // 0: White, 1: Green, 2: Blue, 3: Red
     }
 
     /**

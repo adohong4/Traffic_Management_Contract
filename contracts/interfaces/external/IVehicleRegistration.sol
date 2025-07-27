@@ -33,7 +33,7 @@ interface IVehicleRegistration {
     function getVehicleByAddressUser(address _addressUser)
         external
         view
-        returns (VehicleRegistrationStruct.VehicleRegistration memory);
+        returns (VehicleRegistrationStruct.VehicleRegistration[] memory);
 
     /**
      * @dev Get all vehicle registrations

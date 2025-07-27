@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import "../entities/structs/DriverLicenseStruct.sol";
 import "../entities/structs/OffenceAndRenewal.sol";
 import "../entities/structs/GovAgencyStruct.sol";
+import "../entities/structs/VehicleRegistrationStruct.sol";
 import "../constants/Enum.sol";
 
 /**
@@ -17,6 +18,8 @@ library LibStorage {
     bytes32 constant LICENSE_STORAGE_POSITION = keccak256("diamond.storage.DriverLicense");
     // Storage position for offense and renewal data
     bytes32 constant OFFENSE_RENEWAL_STORAGE_POSITION = keccak256("diamond.storage.OffenseRenewal");
+    // Storage position for vehicle registration data
+    bytes32 constant VEHICLE_REGISTRATION_STORAGE_POSITION = keccak256("diamond.storage.VehicleRegistration");
 
     // Storage struct for government agency data
     struct GovAgencyStorage {
@@ -73,6 +76,29 @@ library LibStorage {
         bytes32 position = OFFENSE_RENEWAL_STORAGE_POSITION;
         assembly {
             ors.slot := position
+        }
+    }
+
+    // Storage struct for vehicle registration data
+    struct VehicleRegistrationStorage {
+        mapping(string => VehicleRegistrationStruct.VehicleRegistration) registrations; // Registration data by vehiclePlateNo
+        mapping(address => string[]) addressToVehiclePlateNos; // Map address to list of vehicle plate numbers
+        mapping(string => bool) vehiclePlateNoExists; // Check if vehicle plate number exists
+        mapping(uint256 => string) tokenIdToVehiclePlateNo; // Map address to vehicle plate number
+        mapping(uint256 => address) tokenToOwner; // Map tokenId to owner
+        mapping(address => uint256) validBalance; // Number of valid tokens per owner
+        string[] vehiclePlateNos; // List of all vehicle plate numbers
+        uint256 registrationCount; // Total number of registrations
+        uint256 holderCount; // Number of unique holders
+    }
+
+    /**
+     * @dev Returns the vehicle registration storage
+     */
+    function vehicleRegistrationStorage() internal pure returns (VehicleRegistrationStorage storage vrs) {
+        bytes32 position = VEHICLE_REGISTRATION_STORAGE_POSITION;
+        assembly {
+            vrs.slot := position
         }
     }
 }
