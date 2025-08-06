@@ -18,3 +18,6 @@ issue Driver License: tuple ["ABC123460", 0x78731D3Ca6b7E34aC0F824c42a7cC18A495c
 Deduct Point: License_No: ABC123456, tuple ["Ma123", 1]
 
 Update Driver License: tuple: ["ABC123460", 0x78731D3Ca6b7E34aC0F824c42a7cC18A495cabaB, "Juwngkog", "A1", 1837443600, 2, 12]
+
+
+issue Gov Agency: ["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2", "CA123", "Cong an ha noi", "Ha noi"]
