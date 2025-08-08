@@ -9,12 +9,13 @@ import "../../utils/Loggers.sol";
 import "../../libraries/LibStorage.sol";
 import "../../libraries/LibAccessControl.sol";
 import "../../interfaces/external/IGovAgency.sol";
+import "../../security/ReEntrancyGuard.sol";
 
 /**
  * @title GovAgencyFacet
  * @dev Manages government agency accounts in the traffic management system
  */
-contract GovAgencyFacet is IGovAgency {
+contract GovAgencyFacet is IGovAgency, ReEntrancyGuard {
     // Events are inherited from IGovAgency
     // event AgencyIssued(address indexed authority, string indexed agencyId, uint256 timestamp);
     // event UpdateAgency(address indexed authority, string indexed agencyId, uint256 timestamp);
@@ -23,7 +24,7 @@ contract GovAgencyFacet is IGovAgency {
     /**
      * @dev Issues a new government agency
      */
-    function issueAgency(GovAgencyStruct.AgencyInput calldata input) external override {
+    function issueAgency(GovAgencyStruct.AgencyInput calldata input) external override nonReentrant {
         LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.GovAgencyStorage storage gas = LibStorage.govAgencyStorage();
 
@@ -62,6 +63,7 @@ contract GovAgencyFacet is IGovAgency {
     function updateAgency(string memory _agencyId, GovAgencyStruct.AgencyUpdateInput calldata input)
         external
         override
+        nonReentrant
     {
         LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.GovAgencyStorage storage gas = LibStorage.govAgencyStorage();
@@ -120,7 +122,7 @@ contract GovAgencyFacet is IGovAgency {
     /**
      * @dev Revokes an existing government agency
      */
-    function revokeAgency(string calldata _agencyId) external override {
+    function revokeAgency(string calldata _agencyId) external override nonReentrant {
         LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.GovAgencyStorage storage gas = LibStorage.govAgencyStorage();
 

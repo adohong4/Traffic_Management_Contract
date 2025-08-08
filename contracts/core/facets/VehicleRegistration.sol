@@ -16,8 +16,9 @@ import "../../libraries/LibSharedFunctions.sol";
 import "../../libraries/LibNFT.sol";
 import "../../interfaces/external/IERC4671.sol";
 import "../../interfaces/external/IVehicleRegistration.sol";
+import "../../security/ReEntrancyGuard.sol";
 
-abstract contract VehicleRegistration is IVehicleRegistration, IERC4671 {
+abstract contract VehicleRegistration is IVehicleRegistration, IERC4671, ReEntrancyGuard {
     // Events for ERC-4671 and vehicle registration
     event VehicleRegistrationIssued(string indexed vehiclePlateNo, address indexed addressUser, uint256 tokenId);
     event VehicleRegistrationUpdated(string indexed vehiclePlateNo, address indexed addressUser, uint256 timestamp);
@@ -29,6 +30,7 @@ abstract contract VehicleRegistration is IVehicleRegistration, IERC4671 {
     function registerVehicleRegistration(VehicleRegistrationStruct.RegistrationInput calldata input)
         external
         override
+        nonReentrant
     {
         // LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.VehicleRegistrationStorage storage vrs = LibStorage.vehicleRegistrationStorage();
@@ -81,7 +83,7 @@ abstract contract VehicleRegistration is IVehicleRegistration, IERC4671 {
     function updateVehicleRegistration(
         string calldata __vehiclePlateNo,
         VehicleRegistrationStruct.RegistrationUpdateInput calldata input
-    ) external override {
+    ) external override nonReentrant {
         // LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.VehicleRegistrationStorage storage vrs = LibStorage.vehicleRegistrationStorage();
 
@@ -161,7 +163,7 @@ abstract contract VehicleRegistration is IVehicleRegistration, IERC4671 {
     /**
      * @dev Revokes a vehicle registration
      */
-    function RevokeVehicleRegistration(string memory vehiclePlateNo) external override {
+    function RevokeVehicleRegistration(string memory vehiclePlateNo) external override nonReentrant {
         // LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.VehicleRegistrationStorage storage vrs = LibStorage.vehicleRegistrationStorage();
 
