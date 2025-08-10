@@ -5,7 +5,7 @@ import "./DriverLicenseFacet.sol";
 import "../../interfaces/external/IOffenceRenewal.sol";
 import "../../entities/structs/OffenceAndRenewal.sol";
 
-abstract contract OffenceAndRenewal is DriverLicenseFacet, IOffenceRenewal {
+contract OffenceAndRenewal is DriverLicenseFacet, IOffenceRenewal {
     /**
      * @dev Adds a renewal rule for a specific license type
      */

@@ -21,3 +21,37 @@ Update Driver License: tuple: ["ABC123460", 0x78731D3Ca6b7E34aC0F824c42a7cC18A49
 
 
 issue Gov Agency: ["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2", "CA123", "Cong an ha noi", "Ha noi"]
+
+
+function main.test.sol:
+```
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.26;
+
+import "../security/AccessControl.sol";
+import "../libraries/LibStorage.sol";
+import "../libraries/LibAccessControl.sol";
+import "./facets/OffenceAndRenewal.sol";
+import "./facets/GovAgencyFacet.sol";
+import "./facets/LicenseAndOffenceFacet.sol";
+import "./facets/VehicleRegistration.sol";
+
+contract MainContract is AccessControl, GovAgencyFacet, LicenseAndOffenceFacet {
+    constructor(address admin) {
+        // Cấp quyền cho admin khởi tạo
+        _setupRole(ADMIN_ROLE, admin);
+        _setupRole(GOV_AGENCY_ROLE, admin);
+
+        _setupRole(ADMIN_ROLE, msg.sender);
+        _setupRole(GOV_AGENCY_ROLE, msg.sender);
+    }
+}
+```
+
+[
+  ["0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99", 0, ["0xd8e30e70"]],
+  ["0xd2a5bC10698FD955D1Fe6cb468a17809A08fd005", 0, ["0x585582fb", "0xe6ff763a", "0x567a3f7c", "0x7a0ed627"]],
+  ["0xddaAd340b0f1Ef65169Ae5E41A8b10776a75482d", 0, ["0x880ad0af", "0x8da5cb5b"]],
+  ["0x0fC5025C764cE34df352757e82f7B5c4Df39A836", 0, ["0x19e3b533", "0x0716c2ae", "0x11046047", "0xcf3bbe18", "0x24c1d5a7"]],
+  ["0xb27A31f1b0AF2946B7F582768f03239b1eC07c2c", 0, ["0xea36b558", "0xe7de23a4", "0x0e4cd7fc", "0xc670641d"]]
+]
