@@ -14,22 +14,24 @@ interface IDiamondLoupe {
     /**
      * @dev Returns all facets and their selectors
      */
-    function facets() external view returns (Facet[] memory);
+    function facets() external view returns (Facet[] memory facets_);
 
     /**
      * @dev Returns function selectors for a given facet
      * @param _facet Address of the facet
      */
-    function facetFunctionSelectors(address _facet) external view returns (bytes4[] memory);
+    function facetFunctionSelectors(address _facet) external view returns (bytes4[] memory facetFunctionSelectors_);
 
     /**
      * @dev Returns all facet addresses
      */
-    function facetAddresses() external view returns (address[] memory);
+    function facetAddresses() external view returns (address[] memory facetAddresses_);
 
     /**
-     * @dev Returns the facet address for a given function selector
-     * @param _functionSelector Function selector
+     * @notice Gets the facet that supports the given selector.
+     * @dev If facet is not found return address(0).
+     * @param _functionSelector The function selector.
+     * @return facetAddress_ The facet address.
      */
-    function facetAddress(bytes4 _functionSelector) external view returns (address);
+    function facetAddress(bytes4 _functionSelector) external view returns (address facetAddress_);
 }
