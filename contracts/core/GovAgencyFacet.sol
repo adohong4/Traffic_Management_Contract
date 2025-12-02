@@ -1,21 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import "../../constants/Errors.sol";
-import "../../constants/Enum.sol";
-import "../../entities/structs/GovAgencyStruct.sol";
-import "../../utils/Validator.sol";
-import "../../utils/Loggers.sol";
-import "../../libraries/LibStorage.sol";
-import "../../libraries/LibAccessControl.sol";
-import "../../interfaces/external/IGovAgency.sol";
-import "../../security/ReEntrancyGuard.sol";
+import "../constants/Errors.sol";
+import "../constants/Enum.sol";
+import "../entities/structs/GovAgencyStruct.sol";
+import "../utils/Validator.sol";
+import "../utils/Loggers.sol";
+import "../libraries/LibStorage.sol";
+import "../libraries/LibAccessControl.sol";
+import "../interfaces/external/IGovAgency.sol";
 
 /**
  * @title GovAgencyFacet
  * @dev Manages government agency accounts in the traffic management system
  */
-contract GovAgencyFacet is IGovAgency, ReEntrancyGuard {
+contract GovAgencyFacet is IGovAgency {
     // Events are inherited from IGovAgency
     // event AgencyIssued(address indexed authority, string indexed agencyId, uint256 timestamp);
     // event UpdateAgency(address indexed authority, string indexed agencyId, uint256 timestamp);

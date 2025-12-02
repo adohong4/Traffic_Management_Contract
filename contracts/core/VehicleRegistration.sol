@@ -1,24 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import "../../constants/Constants.sol";
-import "../../constants/Enum.sol";
-import "../../constants/Success.sol";
-import "../../constants/NFTConstants.sol";
-import "../../entities/structs/VehicleRegistrationStruct.sol";
-import "../../utils/Validator.sol";
-import "../../utils/DateTime.sol";
-import "../../utils/Loggers.sol";
-import "../../utils/NFTUtils.sol";
-import "../../libraries/LibStorage.sol";
-import "../../libraries/LibAccessControl.sol";
-import "../../libraries/LibSharedFunctions.sol";
-import "../../libraries/LibNFT.sol";
-import "../../interfaces/external/IERC4671.sol";
-import "../../interfaces/external/IVehicleRegistration.sol";
-import "../../security/ReEntrancyGuard.sol";
+import "../constants/Constants.sol";
+import "../constants/Enum.sol";
+import "../constants/Success.sol";
+import "../constants/NFTConstants.sol";
+import "../entities/structs/VehicleRegistrationStruct.sol";
+import "../utils/Validator.sol";
+import "../utils/DateTime.sol";
+import "../utils/Loggers.sol";
+import "../utils/NFTUtils.sol";
+import "../libraries/LibStorage.sol";
+import "../libraries/LibAccessControl.sol";
+import "../libraries/LibSharedFunctions.sol";
+import "../libraries/LibNFT.sol";
+import "../interfaces/external/IERC4671.sol";
+import "../interfaces/external/IVehicleRegistration.sol";
 
-abstract contract VehicleRegistration is IVehicleRegistration, IERC4671, ReEntrancyGuard {
+abstract contract VehicleRegistration is IVehicleRegistration, IERC4671 {
     // Events for ERC-4671 and vehicle registration
     event VehicleRegistrationIssued(string indexed vehiclePlateNo, address indexed addressUser, uint256 tokenId);
     event VehicleRegistrationUpdated(string indexed vehiclePlateNo, address indexed addressUser, uint256 timestamp);

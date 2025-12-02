@@ -1,28 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import "../../constants/Constants.sol";
-import "../../constants/Enum.sol";
-import "../../constants/Success.sol";
-import "../../constants/NFTConstants.sol";
-import "../../entities/structs/DriverLicenseStruct.sol";
-import "../../utils/Validator.sol";
-import "../../utils/DateTime.sol";
-import "../../utils/Loggers.sol";
-import "../../utils/NFTUtils.sol";
-import "../../libraries/LibStorage.sol";
-import "../../libraries/LibAccessControl.sol";
-import "../../libraries/LibSharedFunctions.sol";
-import "../../libraries/LibNFT.sol";
-import "../../interfaces/external/IERC4671.sol";
-import "../../interfaces/external/IDriverLicense.sol";
-import "../../security/ReEntrancyGuard.sol";
+import "../constants/Constants.sol";
+import "../constants/Enum.sol";
+import "../constants/Success.sol";
+import "../constants/NFTConstants.sol";
+import "../entities/structs/DriverLicenseStruct.sol";
+import "../utils/Validator.sol";
+import "../utils/DateTime.sol";
+import "../utils/Loggers.sol";
+import "../utils/NFTUtils.sol";
+import "../libraries/LibStorage.sol";
+import "../libraries/LibAccessControl.sol";
+import "../libraries/LibSharedFunctions.sol";
+import "../libraries/LibNFT.sol";
+import "../interfaces/external/IERC4671.sol";
+import "../interfaces/external/IDriverLicense.sol";
 
 /**
  * @title DriverLicenseFacet
  * @dev Manages driver licenses as ERC-4671 NFTs in the traffic management system
  */
-contract DriverLicenseFacet is IDriverLicense, IERC4671, ReEntrancyGuard {
+contract DriverLicenseFacet is IDriverLicense, IERC4671 {
     // Events for ERC-4671
     event LicenseIssued(string indexed licenseNo, address indexed holder, uint256 issueDate);
     event LicenseUpdated(string indexed licenseNo, uint256 newExpiryDate, Enum.LicenseStatus newStatus);
