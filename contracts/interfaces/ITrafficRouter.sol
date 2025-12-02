@@ -44,9 +44,12 @@ interface ITrafficRouter {
     error InvalidSignature(bytes signature);
     error UnauthorizedDirectExecution();
     error UnauthorizedRouter();
+    error ArrayLengthMismatch();
 
     // Functions
-    function submitRequest(RequestType requestType, bytes calldata data, bytes calldata signature) external returns (uint256);
+    function submitRequest(RequestType requestType, bytes calldata data, bytes calldata signature)
+        external
+        returns (uint256);
     function executeRequest(uint256 requestId) external;
     function cancelRequest(uint256 requestId) external;
     function directExecute(RequestType requestType, bytes calldata data) external;

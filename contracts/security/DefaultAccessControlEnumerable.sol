@@ -37,19 +37,19 @@ contract DefaultAccessControlEnumerable is
 
     // -------------------------  EXTERNAL, VIEW  ------------------------------
 
-    function isAdmin(address _sender) public view returns (bool) {
+    function isAdmin(address _sender) public view virtual returns (bool) {
         return hasRole(ADMIN_ROLE, _sender);
     }
 
-    function isDelegateAdmin(address _sender) public view returns (bool) {
+    function isDelegateAdmin(address _sender) public view virtual returns (bool) {
         return hasRole(ADMIN_DELEGATE_ROLE, _sender);
     }
 
-    function isOperator(address _sender) public view returns (bool) {
+    function isOperator(address _sender) public view virtual returns (bool) {
         return hasRole(OPERATOR, _sender);
     }
 
-    function isSigner(address _sender) public view returns (bool) {
+    function isSigner(address _sender) public view virtual returns (bool) {
         return hasRole(SIGNER, _sender);
     }
     // ------------------------------------------------------------------- //

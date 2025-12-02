@@ -9,6 +9,7 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
 import {DefaultAccessControlEnumerable} from "./security/DefaultAccessControlEnumerable.sol";
 import {ITrafficRouter} from "./interfaces/ITrafficRouter.sol";
 import {ITrafficController} from "./interfaces/ITrafficController.sol";
+import {ITrafficFacet} from "./interfaces/ITrafficFacet.sol";
 
 /**
  * @title TrafficRouter
@@ -261,6 +262,58 @@ contract TrafficRouter is
     }
 
     /*//////////////////////////////////////////////////////////////////////////
+                                FACET EXECUTION
+    //////////////////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Executes a function on a registered facet
+     * @param facetKey Key of the facet to execute on
+     * @param data Encoded function call data
+     */
+    function executeOnFacet(bytes32 facetKey, bytes calldata data)
+        external
+        onlyDelegateAdmin
+        nonReentrant
+        returns (bytes memory)
+    {
+        address facetAddr = trafficController.getFacet(facetKey);
+
+        // Execute function call on facet
+        (bool success, bytes memory result) = facetAddr.call(data);
+
+        if (!success) {
+            // If call failed, try to decode the revert reason
+            if (result.length > 0) {
+                assembly {
+                    let returndata_size := mload(result)
+                    revert(add(32, result), returndata_size)
+                }
+            } else {
+                revert ExecutionFailed();
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * @notice Batch executes functions on multiple facets
+     * @param facetKeys Array of facet keys
+     * @param dataArray Array of encoded function call data
+     */
+    function batchExecuteOnFacets(bytes32[] calldata facetKeys, bytes[] calldata dataArray)
+        external
+        onlyDelegateAdmin
+        nonReentrant
+    {
+        if (facetKeys.length != dataArray.length) revert ArrayLengthMismatch();
+
+        for (uint256 i = 0; i < facetKeys.length; i++) {
+            this.executeOnFacet(facetKeys[i], dataArray[i]);
+        }
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
                                 INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
 
@@ -316,8 +369,6 @@ contract TrafficRouter is
             return ITrafficController.pause.selector;
         } else if (requestType == RequestType.UNPAUSE_SYSTEM) {
             return ITrafficController.unpause.selector;
-        } else if (requestType == RequestType.UPGRADE_CONTRACT) {
-            return ITrafficController.upgradeTo.selector;
         }
 
         revert InvalidRequestData();

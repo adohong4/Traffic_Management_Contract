@@ -9,21 +9,116 @@ import "../utils/Loggers.sol";
 import "../libraries/LibStorage.sol";
 import "../interfaces/external/IGovAgency.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "../interfaces/ITrafficFacet.sol";
+import "../interfaces/ITrafficController.sol";
 
 /**
  * @title GovAgencyFacet
- * @dev Manages government agency accounts in the traffic management system
+ * @dev Manages government agency accounts with controller integration
  */
-contract GovAgencyFacet is IGovAgency, ReentrancyGuard {
-    // Events are inherited from IGovAgency
-    // event AgencyIssued(address indexed authority, string indexed agencyId, uint256 timestamp);
-    // event UpdateAgency(address indexed authority, string indexed agencyId, uint256 timestamp);
-    // event RevokedAgency(address indexed authority, string indexed agencyId, uint256 timestamp);
+contract GovAgencyFacet is IGovAgency, ITrafficFacet, ReentrancyGuard {
+    // Controller reference for access control
+    ITrafficController public trafficController;
+
+    // Facet state
+    bool public facetActive;
+    bool public facetPaused;
+    string public constant FACET_NAME = "GovAgencyFacet";
+    string public constant FACET_VERSION = "1.0.0";
 
     /**
-     * @dev Issues a new government agency
+     * @notice Initializes the facet with controller reference
+     * @param controller Address of the traffic controller
+     */
+    function initializeFacet(address controller) external override {
+        require(controller != address(0), "Invalid controller");
+        trafficController = ITrafficController(controller);
+        facetActive = true;
+        facetPaused = false;
+
+        emit FacetInitialized(address(this));
+    }
+
+    /**
+     * @notice Gets facet name
+     */
+    function getFacetName() external pure override returns (string memory) {
+        return FACET_NAME;
+    }
+
+    /**
+     * @notice Gets facet version
+     */
+    function getFacetVersion() external pure override returns (string memory) {
+        return FACET_VERSION;
+    }
+
+    /**
+     * @notice Checks if facet is active
+     */
+    function isFacetActive() external view override returns (bool) {
+        return facetActive && !facetPaused;
+    }
+
+    /**
+     * @notice Pauses the facet
+     */
+    function pauseFacet() external override {
+        require(msg.sender == address(trafficController) || trafficController.isAdmin(msg.sender), "Unauthorized");
+        facetPaused = true;
+        emit FacetPaused(address(this));
+    }
+
+    /**
+     * @notice Unpauses the facet
+     */
+    function unpauseFacet() external override {
+        require(msg.sender == address(trafficController) || trafficController.isAdmin(msg.sender), "Unauthorized");
+        facetPaused = false;
+        emit FacetUnpaused(address(this));
+    }
+
+    /**
+     * @notice Checks if user has specific permission
+     * @param user User address
+     * @param permission Permission name
+     */
+    function hasPermission(address user, string calldata permission) external view override returns (bool) {
+        // Check permissions through controller
+        if (keccak256(bytes(permission)) == keccak256("ISSUE_AGENCY")) {
+            return trafficController.isDelegateAdmin(user) || trafficController.isOperator(user);
+        }
+        if (keccak256(bytes(permission)) == keccak256("UPDATE_AGENCY")) {
+            return trafficController.isDelegateAdmin(user);
+        }
+        return false;
+    }
+
+    /**
+     * @notice Emergency stop
+     */
+    function emergencyStop() external override {
+        require(trafficController.isAdmin(msg.sender), "Admin only");
+        facetPaused = true;
+        facetActive = false;
+    }
+
+    /**
+     * @notice Emergency resume
+     */
+    function emergencyResume() external override {
+        require(trafficController.isAdmin(msg.sender), "Admin only");
+        facetActive = true;
+        facetPaused = false;
+    }
+
+    /**
+     * @dev Issues a new government agency with access control
      */
     function issueAgency(GovAgencyStruct.AgencyInput calldata input) external override nonReentrant {
+        require(this.isFacetActive(), "Facet not active");
+        require(this.hasPermission(msg.sender, "ISSUE_AGENCY"), "Insufficient permission");
+
         LibStorage.GovAgencyStorage storage gas = LibStorage.govAgencyStorage();
 
         // Validations
@@ -56,13 +151,16 @@ contract GovAgencyFacet is IGovAgency, ReentrancyGuard {
     }
 
     /**
-     * @dev Updates an existing government agency
+     * @dev Updates an existing government agency with access control
      */
     function updateAgency(string memory _agencyId, GovAgencyStruct.AgencyUpdateInput calldata input)
         external
         override
         nonReentrant
     {
+        require(this.isFacetActive(), "Facet not active");
+        require(this.hasPermission(msg.sender, "UPDATE_AGENCY"), "Insufficient permission");
+
         LibStorage.GovAgencyStorage storage gas = LibStorage.govAgencyStorage();
 
         // Validations

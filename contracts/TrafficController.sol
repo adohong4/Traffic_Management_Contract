@@ -6,6 +6,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {DefaultAccessControlEnumerable} from "./security/DefaultAccessControlEnumerable.sol";
 import {ITrafficController} from "./interfaces/ITrafficController.sol";
+import {ITrafficFacet} from "./interfaces/ITrafficFacet.sol";
 
 /**
  * @title TrafficController
@@ -47,6 +48,145 @@ contract TrafficController is
     // Enhanced configuration mappings for detailed module management
     mapping(address moduleAddress => ModuleConfig) public moduleConfigs;
     mapping(bytes32 configKey => SystemConfig) public systemConfigs;
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                FACET MANAGEMENT
+    //////////////////////////////////////////////////////////////////////////*/
+
+    // Facet registry
+    mapping(bytes32 facetKey => address facetAddress) public facets;
+    mapping(address facetAddress => FacetConfig) public facetConfigs;
+
+    // Facet configuration
+    struct FacetConfig {
+        bool isActive;
+        bool isPaused;
+        bytes32 facetKey;
+        address facetAddress;
+        uint256 registeredAt;
+        uint256 lastUpdated;
+    }
+
+    // Facet keys for easy management
+    bytes32 public constant GOV_AGENCY_FACET = keccak256("GOV_AGENCY_FACET");
+    bytes32 public constant DRIVER_LICENSE_FACET = keccak256("DRIVER_LICENSE_FACET");
+    bytes32 public constant VEHICLE_REGISTRATION_FACET = keccak256("VEHICLE_REGISTRATION_FACET");
+    bytes32 public constant OFFENCE_RENEWAL_FACET = keccak256("OFFENCE_RENEWAL_FACET");
+
+    /**
+     * @notice Registers a facet with the controller
+     * @param facetKey Unique identifier for the facet
+     * @param facetAddr Address of the facet contract
+     */
+    function registerFacet(bytes32 facetKey, address facetAddr) external onlyDelegateAdmin {
+        if (facetAddr == address(0)) revert ZeroAddress();
+        if (facetAddr.code.length == 0) revert NotContract();
+
+        // Initialize facet with controller address
+        ITrafficFacet(facetAddr).initializeFacet(address(this));
+
+        facets[facetKey] = facetAddr;
+        facetConfigs[facetAddr] = FacetConfig({
+            isActive: true,
+            isPaused: false,
+            facetKey: facetKey,
+            facetAddress: facetAddr,
+            registeredAt: block.timestamp,
+            lastUpdated: block.timestamp
+        });
+
+        emit FacetRegistered(facetKey, facetAddr);
+    }
+
+    /**
+     * @notice Unregisters a facet
+     * @param facetKey Facet key to unregister
+     */
+    function unregisterFacet(bytes32 facetKey) external onlyDelegateAdmin {
+        address facetAddr = facets[facetKey];
+        if (facetAddr == address(0)) revert FacetNotRegistered(facetKey);
+
+        // Pause facet before unregistering
+        ITrafficFacet(facetAddr).pauseFacet();
+
+        delete facets[facetKey];
+        delete facetConfigs[facetAddr];
+
+        emit FacetUnregistered(facetKey, facetAddr);
+    }
+
+    /**
+     * @notice Pauses a registered facet
+     * @param facetKey Facet key to pause
+     */
+    function pauseFacet(bytes32 facetKey) external onlyDelegateAdmin {
+        address facetAddr = _getFacetAddress(facetKey);
+        ITrafficFacet(facetAddr).pauseFacet();
+
+        facetConfigs[facetAddr].isPaused = true;
+        facetConfigs[facetAddr].lastUpdated = block.timestamp;
+
+        emit FacetPaused(facetKey, facetAddr);
+    }
+
+    /**
+     * @notice Unpauses a registered facet
+     * @param facetKey Facet key to unpause
+     */
+    function unpauseFacet(bytes32 facetKey) external onlyDelegateAdmin {
+        address facetAddr = _getFacetAddress(facetKey);
+        ITrafficFacet(facetAddr).unpauseFacet();
+
+        facetConfigs[facetAddr].isPaused = false;
+        facetConfigs[facetAddr].lastUpdated = block.timestamp;
+
+        emit FacetUnpaused(facetKey, facetAddr);
+    }
+
+    /**
+     * @notice Gets facet address by key
+     * @param facetKey Facet key
+     */
+    function getFacet(bytes32 facetKey) external view returns (address) {
+        return _getFacet(facetKey);
+    }
+
+    /**
+     * @notice Internal function to get facet address
+     * @param facetKey Facet key
+     */
+    function _getFacet(bytes32 facetKey) internal view returns (address) {
+        address facetAddr = facets[facetKey];
+        if (facetAddr == address(0)) revert FacetNotRegistered(facetKey);
+        if (facetConfigs[facetAddr].isPaused) revert SystemPaused();
+        return facetAddr;
+    }
+
+    /**
+     * @notice Gets facet configuration
+     * @param facetAddr Facet address
+     */
+    function getFacetConfig(address facetAddr) external view returns (FacetConfig memory) {
+        return facetConfigs[facetAddr];
+    }
+
+    /**
+     * @notice Checks if facet is registered and active
+     * @param facetKey Facet key
+     */
+    function isFacetRegistered(bytes32 facetKey) external view returns (bool) {
+        return facets[facetKey] != address(0) && facetConfigs[facets[facetKey]].isActive;
+    }
+
+    /**
+     * @notice Internal function to get facet address
+     */
+    function _getFacetAddress(bytes32 facetKey) internal view returns (address) {
+        address facetAddr = facets[facetKey];
+        if (facetAddr == address(0)) revert FacetNotRegistered(facetKey);
+        if (facetConfigs[facetAddr].isPaused) revert SystemPaused();
+        return facetAddr;
+    }
 
     /*//////////////////////////////////////////////////////////////////////////
                                 DATA STRUCTURES
@@ -374,6 +514,58 @@ contract TrafficController is
     }
 
     /*//////////////////////////////////////////////////////////////////////////
+                                FACET EXECUTION
+    //////////////////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Executes a function on a registered facet
+     * @param facetKey Key of the facet to execute on
+     * @param data Encoded function call data
+     */
+    function executeOnFacet(bytes32 facetKey, bytes calldata data)
+        external
+        onlyDelegateAdmin
+        nonReentrant
+        returns (bytes memory)
+    {
+        address facetAddr = _getFacet(facetKey);
+
+        // Execute function call on facet
+        (bool success, bytes memory result) = facetAddr.call(data);
+
+        if (!success) {
+            // If call failed, try to decode the revert reason
+            if (result.length > 0) {
+                assembly {
+                    let returndata_size := mload(result)
+                    revert(add(32, result), returndata_size)
+                }
+            } else {
+                revert ExecutionFailed();
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * @notice Batch executes functions on multiple facets
+     * @param facetKeys Array of facet keys
+     * @param dataArray Array of encoded function call data
+     */
+    function batchExecuteOnFacets(bytes32[] calldata facetKeys, bytes[] calldata dataArray)
+        external
+        onlyDelegateAdmin
+        nonReentrant
+    {
+        if (facetKeys.length != dataArray.length) revert ArrayLengthMismatch();
+
+        for (uint256 i = 0; i < facetKeys.length; i++) {
+            this.executeOnFacet(facetKeys[i], dataArray[i]);
+        }
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
                                 UUPS UPGRADE AUTH
     //////////////////////////////////////////////////////////////////////////*/
 
@@ -390,8 +582,37 @@ contract TrafficController is
     event SystemConfigUpdated(bytes32 indexed key, SystemConfig config);
 
     /*//////////////////////////////////////////////////////////////////////////
+                                ACCESS CONTROL GETTERS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Checks if user has admin role
+     * @param user Address to check
+     */
+    function isAdmin(address user) public view override(DefaultAccessControlEnumerable, ITrafficController) returns (bool) {
+        return hasRole(ADMIN_ROLE, user);
+    }
+
+    /**
+     * @notice Checks if user has delegate admin role
+     * @param user Address to check
+     */
+    function isDelegateAdmin(address user) public view override(DefaultAccessControlEnumerable, ITrafficController) returns (bool) {
+        return hasRole(ADMIN_DELEGATE_ROLE, user);
+    }
+
+    /**
+     * @notice Checks if user has operator role
+     * @param user Address to check
+     */
+    function isOperator(address user) public view override(DefaultAccessControlEnumerable, ITrafficController) returns (bool) {
+        return hasRole(OPERATOR, user);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
                                 ERRORS
     //////////////////////////////////////////////////////////////////////////*/
 
     error UnauthorizedRouter();
+    error ExecutionFailed();
 }
