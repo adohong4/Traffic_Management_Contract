@@ -15,4 +15,7 @@ interface ITrafficController {
     error UnauthorizedModule(address caller);
     error SystemPaused();
     error ModuleNotRegistered(bytes32 key);
+
+    // Add router function to interface
+    function router() external view returns (address);
 }

@@ -11,17 +11,17 @@ import "../utils/DateTime.sol";
 import "../utils/Loggers.sol";
 import "../utils/NFTUtils.sol";
 import "../libraries/LibStorage.sol";
-import "../libraries/LibAccessControl.sol";
 import "../libraries/LibSharedFunctions.sol";
 import "../libraries/LibNFT.sol";
 import "../interfaces/external/IERC4671.sol";
 import "../interfaces/external/IDriverLicense.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title DriverLicenseFacet
  * @dev Manages driver licenses as ERC-4671 NFTs in the traffic management system
  */
-contract DriverLicenseFacet is IDriverLicense, IERC4671 {
+contract DriverLicenseFacet is IDriverLicense, IERC4671, ReentrancyGuard {
     // Events for ERC-4671
     event LicenseIssued(string indexed licenseNo, address indexed holder, uint256 issueDate);
     event LicenseUpdated(string indexed licenseNo, uint256 newExpiryDate, Enum.LicenseStatus newStatus);
@@ -31,7 +31,6 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671 {
      * @dev Issues a new driver license as an ERC-4671 NFT
      */
     function issueLicense(DriverLicenseStruct.LicenseInput calldata input) external override nonReentrant {
-        //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
 
         Validator.checkString(input.licenseNo);
@@ -82,7 +81,6 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671 {
      * @dev Updates an existing license
      */
     function updateLicense(DriverLicenseStruct.LicenseUpdateInput calldata input) external override nonReentrant {
-        //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
 
         // Validations
@@ -149,7 +147,6 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671 {
      * @dev Revokes a License
      */
     function revokeLicense(string calldata _licenseNo) external override nonReentrant {
-        //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
 
         // Validation

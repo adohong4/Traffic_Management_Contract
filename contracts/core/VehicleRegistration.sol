@@ -11,13 +11,13 @@ import "../utils/DateTime.sol";
 import "../utils/Loggers.sol";
 import "../utils/NFTUtils.sol";
 import "../libraries/LibStorage.sol";
-import "../libraries/LibAccessControl.sol";
 import "../libraries/LibSharedFunctions.sol";
 import "../libraries/LibNFT.sol";
 import "../interfaces/external/IERC4671.sol";
 import "../interfaces/external/IVehicleRegistration.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-abstract contract VehicleRegistration is IVehicleRegistration, IERC4671 {
+contract VehicleRegistration is IVehicleRegistration, IERC4671, ReentrancyGuard {
     // Events for ERC-4671 and vehicle registration
     event VehicleRegistrationIssued(string indexed vehiclePlateNo, address indexed addressUser, uint256 tokenId);
     event VehicleRegistrationUpdated(string indexed vehiclePlateNo, address indexed addressUser, uint256 timestamp);
@@ -31,7 +31,6 @@ abstract contract VehicleRegistration is IVehicleRegistration, IERC4671 {
         override
         nonReentrant
     {
-        // LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.VehicleRegistrationStorage storage vrs = LibStorage.vehicleRegistrationStorage();
 
         Validator.checkAddress(input.addressUser);
@@ -83,7 +82,6 @@ abstract contract VehicleRegistration is IVehicleRegistration, IERC4671 {
         string calldata __vehiclePlateNo,
         VehicleRegistrationStruct.RegistrationUpdateInput calldata input
     ) external override nonReentrant {
-        // LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.VehicleRegistrationStorage storage vrs = LibStorage.vehicleRegistrationStorage();
 
         Validator.checkString(__vehiclePlateNo);
@@ -163,7 +161,6 @@ abstract contract VehicleRegistration is IVehicleRegistration, IERC4671 {
      * @dev Revokes a vehicle registration
      */
     function RevokeVehicleRegistration(string memory vehiclePlateNo) external override nonReentrant {
-        // LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.VehicleRegistrationStorage storage vrs = LibStorage.vehicleRegistrationStorage();
 
         // Validate input
