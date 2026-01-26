@@ -41,7 +41,6 @@ contract DriverLicense is
     function issueLicense(
         DriverLicenseStruct.LicenseInput calldata input
     ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
-        //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
 
         Validator.checkString(input.licenseNo);
@@ -101,7 +100,6 @@ contract DriverLicense is
     function updateLicense(
         DriverLicenseStruct.LicenseUpdateInput calldata input
     ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
-        //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
 
         // Validations
@@ -185,7 +183,6 @@ contract DriverLicense is
     function revokeLicense(
         string calldata _licenseNo
     ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
-        //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
 
         // Validation

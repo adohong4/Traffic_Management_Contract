@@ -37,8 +37,6 @@ contract VehicleRegistration is
     function registerVehicleRegistration(
         VehicleRegistrationStruct.RegistrationInput calldata input
     ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
-        // LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
-
         LibStorage.VehicleRegistrationStorage storage vrs = LibStorage
             .vehicleRegistrationStorage();
 
@@ -105,7 +103,6 @@ contract VehicleRegistration is
         string calldata __vehiclePlateNo,
         VehicleRegistrationStruct.RegistrationUpdateInput calldata input
     ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
-        // LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.VehicleRegistrationStorage storage vrs = LibStorage
             .vehicleRegistrationStorage();
 
@@ -218,7 +215,6 @@ contract VehicleRegistration is
     function RevokeVehicleRegistration(
         string memory vehiclePlateNo
     ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
-        // LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.VehicleRegistrationStorage storage vrs = LibStorage
             .vehicleRegistrationStorage();
 

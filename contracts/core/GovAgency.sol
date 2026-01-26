@@ -28,8 +28,7 @@ contract GovAgency is IGovAgency, ReEntrancyGuard, AccessControl {
      */
     function issueAgency(
         GovAgencyStruct.AgencyInput calldata input
-    ) external override nonReentrant {
-        LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
+    ) external override nonReentrant onlyRole(ADMIN_ROLE) {
         LibStorage.GovAgencyStorage storage gas = LibStorage.govAgencyStorage();
 
         // Validations
@@ -72,8 +71,7 @@ contract GovAgency is IGovAgency, ReEntrancyGuard, AccessControl {
     function updateAgency(
         string memory _agencyId,
         GovAgencyStruct.AgencyUpdateInput calldata input
-    ) external override nonReentrant {
-        LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
+    ) external override nonReentrant onlyRole(ADMIN_ROLE) {
         LibStorage.GovAgencyStorage storage gas = LibStorage.govAgencyStorage();
 
         // Validations
@@ -143,8 +141,7 @@ contract GovAgency is IGovAgency, ReEntrancyGuard, AccessControl {
      */
     function revokeAgency(
         string calldata _agencyId
-    ) external override nonReentrant {
-        LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
+    ) external override nonReentrant onlyRole(ADMIN_ROLE) {
         LibStorage.GovAgencyStorage storage gas = LibStorage.govAgencyStorage();
 
         // Validation
