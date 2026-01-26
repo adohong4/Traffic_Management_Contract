@@ -1,13 +1,14 @@
+//npx hardhat run scripts/deploys/deploy-driver-license.js --network localhost
 const hre = require("hardhat");
 
 async function main() {
-  const DriverLicense = await hre.ethers.getContractFactory("DriverLicense");
-  const dl = await DriverLicense.deploy();
-  await dl.waitForDeployment();
-  console.log("DriverLicense:", await dl.getAddress());
+  const OffenceAndRenewal = await hre.ethers.getContractFactory("OffenceAndRenewal");
+  const contract = await OffenceAndRenewal.deploy();
+  await contract.waitForDeployment();
+  console.log("OffenceAndRenewal deployed to:", await contract.getAddress());
 }
 
 main().catch((error) => {
   console.error(error);
-  process.exitCode = 1;
+  process.exit(1);
 });

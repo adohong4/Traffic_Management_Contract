@@ -13,7 +13,7 @@ contract OffenceAndRenewal is DriverLicense, IOffenceRenewal {
         string calldata _licenseType,
         uint256 _bonusTime,
         string calldata _description
-    ) external override nonReentrant {
+    ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
         //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.OffenseRenewalStorage storage ors = LibStorage
             .offenseRenewalStorage();
@@ -132,7 +132,7 @@ contract OffenceAndRenewal is DriverLicense, IOffenceRenewal {
      */
     function revokeRenewRule(
         string calldata _licenseType
-    ) external override nonReentrant {
+    ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
         //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.OffenseRenewalStorage storage ors = LibStorage
             .offenseRenewalStorage();
@@ -172,7 +172,7 @@ contract OffenceAndRenewal is DriverLicense, IOffenceRenewal {
     function deductPoint(
         string calldata _licenseNo,
         OffenceAndRenewalStruct.Offence calldata _offence
-    ) external override nonReentrant {
+    ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
         //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
         LibStorage.OffenseRenewalStorage storage ors = LibStorage
@@ -225,7 +225,12 @@ contract OffenceAndRenewal is DriverLicense, IOffenceRenewal {
     /**
      * @dev Updates all licenses with point > 0 and status == ACTIVE to point = 12
      */
-    function resetPointsToMax() external override nonReentrant {
+    function resetPointsToMax()
+        external
+        override
+        nonReentrant
+        onlyRole(GOV_AGENCY_ROLE)
+    {
         //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
         uint256 tokenCount = ls.tokenCount;
@@ -256,7 +261,7 @@ contract OffenceAndRenewal is DriverLicense, IOffenceRenewal {
      */
     function renewLicense(
         string calldata _licenseNo
-    ) external override nonReentrant {
+    ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
         //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
         LibStorage.OffenseRenewalStorage storage ors = LibStorage
@@ -307,7 +312,12 @@ contract OffenceAndRenewal is DriverLicense, IOffenceRenewal {
     /**
      * @dev Updates status of all licenses based on expiryDate
      */
-    function updateAllLicenseStatuses() external override nonReentrant {
+    function updateAllLicenseStatuses()
+        external
+        override
+        nonReentrant
+        onlyRole(GOV_AGENCY_ROLE)
+    {
         //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
         uint256 tokenCount = ls.tokenCount;

@@ -17,18 +17,30 @@ import "../libraries/LibNFT.sol";
 import "../interfaces/external/IERC4671.sol";
 import "../interfaces/external/IDriverLicense.sol";
 import "../security/ReEntrancyGuard.sol";
+import "../security/AccessControl.sol";
 
 /**
  * @title DriverLicenseFacet
  * @dev Manages driver licenses as ERC-4671 NFTs in the traffic management system
  */
-contract DriverLicense is IDriverLicense, IERC4671, ReEntrancyGuard {
+contract DriverLicense is
+    IDriverLicense,
+    IERC4671,
+    ReEntrancyGuard,
+    AccessControl
+{
+    // Constructor: grant role
+    constructor() {
+        _grantRole(ADMIN_ROLE, msg.sender);
+        _grantRole(GOV_AGENCY_ROLE, msg.sender);
+    }
+
     /**
      * @dev Issues a new driver license as an ERC-4671 NFT
      */
     function issueLicense(
         DriverLicenseStruct.LicenseInput calldata input
-    ) external override nonReentrant {
+    ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
         //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
 
@@ -88,7 +100,7 @@ contract DriverLicense is IDriverLicense, IERC4671, ReEntrancyGuard {
      */
     function updateLicense(
         DriverLicenseStruct.LicenseUpdateInput calldata input
-    ) external override nonReentrant {
+    ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
         //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
 
@@ -172,7 +184,7 @@ contract DriverLicense is IDriverLicense, IERC4671, ReEntrancyGuard {
      */
     function revokeLicense(
         string calldata _licenseNo
-    ) external override nonReentrant {
+    ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
         //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
 
