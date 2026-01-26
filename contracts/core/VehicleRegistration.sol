@@ -17,36 +17,28 @@ import "../libraries/LibNFT.sol";
 import "../interfaces/external/IERC4671.sol";
 import "../interfaces/external/IVehicleRegistration.sol";
 import "../security/ReEntrancyGuard.sol";
+import "../security/AccessControl.sol";
 
 abstract contract VehicleRegistration is
     IVehicleRegistration,
     IERC4671,
-    ReEntrancyGuard
+    ReEntrancyGuard,
+    AccessControl
 {
-    // Events for ERC-4671 and vehicle registration
-    event VehicleRegistrationIssued(
-        string indexed vehiclePlateNo,
-        address indexed addressUser,
-        uint256 tokenId
-    );
-    event VehicleRegistrationUpdated(
-        string indexed vehiclePlateNo,
-        address indexed addressUser,
-        uint256 timestamp
-    );
-    event VehicleRegistrationRevoked(
-        string indexed vehiclePlateNo,
-        address indexed addressUser,
-        uint256 timestamp
-    );
+    // Constructor: grant role
+    constructor() {
+        _grantRole(ADMIN_ROLE, msg.sender);
+        _grantRole(GOV_AGENCY_ROLE, msg.sender);
+    }
 
     /**
      * @dev Create a new Vehicle license as an ERC-4671 NFT
      */
     function registerVehicleRegistration(
         VehicleRegistrationStruct.RegistrationInput calldata input
-    ) external override nonReentrant {
+    ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
         // LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
+
         LibStorage.VehicleRegistrationStorage storage vrs = LibStorage
             .vehicleRegistrationStorage();
 
@@ -112,7 +104,7 @@ abstract contract VehicleRegistration is
     function updateVehicleRegistration(
         string calldata __vehiclePlateNo,
         VehicleRegistrationStruct.RegistrationUpdateInput calldata input
-    ) external override nonReentrant {
+    ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
         // LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.VehicleRegistrationStorage storage vrs = LibStorage
             .vehicleRegistrationStorage();
@@ -225,7 +217,7 @@ abstract contract VehicleRegistration is
      */
     function RevokeVehicleRegistration(
         string memory vehiclePlateNo
-    ) external override nonReentrant {
+    ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
         // LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.VehicleRegistrationStorage storage vrs = LibStorage
             .vehicleRegistrationStorage();

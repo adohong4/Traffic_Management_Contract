@@ -23,19 +23,6 @@ import "../security/ReEntrancyGuard.sol";
  * @dev Manages driver licenses as ERC-4671 NFTs in the traffic management system
  */
 contract DriverLicense is IDriverLicense, IERC4671, ReEntrancyGuard {
-    // Events for ERC-4671
-    event LicenseIssued(
-        string indexed licenseNo,
-        address indexed holder,
-        uint256 issueDate
-    );
-    event LicenseUpdated(
-        string indexed licenseNo,
-        uint256 newExpiryDate,
-        Enum.LicenseStatus newStatus
-    );
-    event LicenseRevoked(string indexed licenseNo, uint256 timestamp);
-
     /**
      * @dev Issues a new driver license as an ERC-4671 NFT
      */

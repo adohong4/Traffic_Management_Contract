@@ -17,11 +17,6 @@ import "../security/AccessControl.sol";
  * @dev Manages government agency accounts in the traffic management system
  */
 contract GovAgency is IGovAgency, ReEntrancyGuard, AccessControl {
-    // Events are inherited from IGovAgency
-    // event AgencyIssued(address indexed authority, string indexed agencyId, uint256 timestamp);
-    // event UpdateAgency(address indexed authority, string indexed agencyId, uint256 timestamp);
-    // event RevokedAgency(address indexed authority, string indexed agencyId, uint256 timestamp);
-
     // Constructor: grant role
     constructor() {
         _grantRole(ADMIN_ROLE, msg.sender);

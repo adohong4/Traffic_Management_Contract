@@ -5,15 +5,44 @@ import "../../entities/structs/VehicleRegistrationStruct.sol";
 
 interface IVehicleRegistration {
     //events
-    event Registration(address indexed _addressAgent, string _vehiclePlateNo, uint256 _timestamp);
-    event Update(address indexed _addressAgent, string _vehiclePlateNo, uint256 _timestamp);
-    event Revoke(address indexed _addressAgent, string _vehiclePlateNo, uint256 _timestamp);
+    event Registration(
+        address indexed _addressAgent,
+        string _vehiclePlateNo,
+        uint256 _timestamp
+    );
+    event Update(
+        address indexed _addressAgent,
+        string _vehiclePlateNo,
+        uint256 _timestamp
+    );
+    event Revoke(
+        address indexed _addressAgent,
+        string _vehiclePlateNo,
+        uint256 _timestamp
+    );
+    event VehicleRegistrationIssued(
+        string indexed vehiclePlateNo,
+        address indexed addressUser,
+        uint256 tokenId
+    );
+    event VehicleRegistrationUpdated(
+        string indexed vehiclePlateNo,
+        address indexed addressUser,
+        uint256 timestamp
+    );
+    event VehicleRegistrationRevoked(
+        string indexed vehiclePlateNo,
+        address indexed addressUser,
+        uint256 timestamp
+    );
 
     /**
      * @dev Registers a new vehicle
      * @param input The registration input data
      */
-    function registerVehicleRegistration(VehicleRegistrationStruct.RegistrationInput calldata input) external;
+    function registerVehicleRegistration(
+        VehicleRegistrationStruct.RegistrationInput calldata input
+    ) external;
 
     /**
      * @dev Updates an existing vehicle registration
@@ -30,7 +59,9 @@ interface IVehicleRegistration {
      * @param _addressUser The address user to query
      * @return The vehicle registration details
      */
-    function getVehicleByAddressUser(address _addressUser)
+    function getVehicleByAddressUser(
+        address _addressUser
+    )
         external
         view
         returns (VehicleRegistrationStruct.VehicleRegistration[] memory);

@@ -9,17 +9,34 @@ import "../../entities/structs/DriverLicenseStruct.sol";
  * @dev Interface for managing driver licenses, including issuance, updates, revocation, and retrieval.
  */
 interface IDriverLicense {
+    // Events for ERC-4671
+    event LicenseIssued(
+        string indexed licenseNo,
+        address indexed holder,
+        uint256 issueDate
+    );
+    event LicenseUpdated(
+        string indexed licenseNo,
+        uint256 newExpiryDate,
+        Enum.LicenseStatus newStatus
+    );
+    event LicenseRevoked(string indexed licenseNo, uint256 timestamp);
+
     /**
      * @notice Issues a new driver license, creating a new NFT and storing the license details.
      * @param input Struct containing all necessary information to issue a license.
      */
-    function issueLicense(DriverLicenseStruct.LicenseInput calldata input) external;
+    function issueLicense(
+        DriverLicenseStruct.LicenseInput calldata input
+    ) external;
 
     /**
      * @notice Updates an existing driver license, modifying its details and status.
      * @param input Struct containing updated information for the license.
      */
-    function updateLicense(DriverLicenseStruct.LicenseUpdateInput calldata input) external;
+    function updateLicense(
+        DriverLicenseStruct.LicenseUpdateInput calldata input
+    ) external;
 
     /**
      * @notice Revokes an active driver license, changing its status to REVOKED.
@@ -34,23 +51,27 @@ interface IDriverLicense {
      * @param licenseNo License number to query.
      * @return A struct containing full license information.
      */
-    function getLicense(string memory licenseNo) external view returns (DriverLicenseStruct.DriverLicense memory);
+    function getLicense(
+        string memory licenseNo
+    ) external view returns (DriverLicenseStruct.DriverLicense memory);
 
     /**
      * @notice Returns all issued licenses stored on-chain.
      * @return An array of all DriverLicense structs.
      */
-    function getAllLicenses() external view returns (DriverLicenseStruct.DriverLicense[] memory);
+    function getAllLicenses()
+        external
+        view
+        returns (DriverLicenseStruct.DriverLicense[] memory);
 
     /**
      * @notice Retrieves all licenses issued to a specific wallet address.
      * @param holderAddress Address of the license holder.
      * @return An array of licenses associated with the address.
      */
-    function getLicensesByHolder(address holderAddress)
-        external
-        view
-        returns (DriverLicenseStruct.DriverLicense[] memory);
+    function getLicensesByHolder(
+        address holderAddress
+    ) external view returns (DriverLicenseStruct.DriverLicense[] memory);
 
     /**
      * @notice Returns the total number of licenses issued.

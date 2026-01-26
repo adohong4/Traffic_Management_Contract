@@ -1,3 +1,4 @@
+//npx hardhat run scripts/functions/govAgency.js --network localhost
 const hre = require("hardhat");
 
 async function main() {
