@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+
 import "../constants/Constants.sol";
 import "../constants/Enum.sol";
 import "../constants/Success.sol";
@@ -22,25 +27,30 @@ import "../libraries/LibRegistration.sol";
 import "../interfaces/ITrafficController.sol";
 
 contract VehicleRegistration is
+    Initializable,
+    UUPSUpgradeable,
+    AccessControlUpgradeable,
+    ReentrancyGuardUpgradeable,
     IVehicleRegistration,
-    IERC4671,
-    ReEntrancyGuard,
-    AccessControl
+    IERC4671
 {
-    address public immutable trafficController;
+    address public trafficController;
 
-    // Constructor: grant role
-    constructor(address _trafficController) {
-        trafficController = _trafficController;
-        _grantRole(ADMIN_ROLE, msg.sender);
-        _grantRole(GOV_AGENCY_ROLE, msg.sender);
+    bytes32 public constant GOV_AGENCY_ROLE = keccak256("GOV_AGENCY_ROLE");
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
 
-    function _validateRegistration() internal view {
-        LibRegistration.validate(
-            trafficController,
-            ITrafficController(trafficController).vehicleRegistration
-        );
+    function initialize(address _trafficController) public initializer {
+        __UUPSUpgradeable_init();
+        __AccessControl_init();
+        __ReentrancyGuard_init();
+
+        trafficController = _trafficController;
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(GOV_AGENCY_ROLE, msg.sender);
     }
 
     /**
@@ -162,63 +172,6 @@ contract VehicleRegistration is
             input.addressUser,
             block.timestamp
         );
-    }
-
-    /**
-     * @dev Internal function to find tokenId by vehiclePlateNo
-     */
-    function _findTokenIdByVehiclePlateNo(
-        string memory vehiclePlateNo
-    ) private view returns (uint256) {
-        LibStorage.VehicleRegistrationStorage storage vrs = LibStorage
-            .vehicleRegistrationStorage();
-        for (uint256 i = 1; i <= vrs.registrationCount; i++) {
-            if (
-                keccak256(bytes(vrs.tokenIdToVehiclePlateNo[i])) ==
-                keccak256(bytes(vehiclePlateNo))
-            ) {
-                return i;
-            }
-        }
-        revert Errors.NotFound();
-    }
-
-    /**
-     * @dev Internal function to update holder mappings when owner changes
-     */
-    function _updateHolderMapping(
-        uint256 tokenId,
-        address oldHolder,
-        address newHolder,
-        bool wasValid
-    ) private {
-        LibStorage.VehicleRegistrationStorage storage vrs = LibStorage
-            .vehicleRegistrationStorage();
-        string[] storage oldHolderPlates = vrs.addressToVehiclePlateNos[
-            oldHolder
-        ];
-        string memory plateNo = vrs.tokenIdToVehiclePlateNo[tokenId];
-        uint256 index = LibSharedFunctions.findIndexString(
-            oldHolderPlates,
-            plateNo
-        );
-        LibSharedFunctions.removeStringByIndex(oldHolderPlates, index);
-
-        if (oldHolderPlates.length == 0 && vrs.validBalance[oldHolder] == 0) {
-            vrs.holderCount--;
-        }
-
-        vrs.addressToVehiclePlateNos[newHolder].push(plateNo);
-        vrs.tokenToOwner[tokenId] = newHolder;
-
-        if (vrs.addressToVehiclePlateNos[newHolder].length == 1) {
-            vrs.holderCount++;
-        }
-
-        if (wasValid) {
-            vrs.validBalance[oldHolder]--;
-            vrs.validBalance[newHolder]++;
-        }
     }
 
     /**
@@ -363,5 +316,78 @@ contract VehicleRegistration is
     function hasValid(address owner) external view override returns (bool) {
         Validator.checkAddress(owner);
         return LibStorage.vehicleRegistrationStorage().validBalance[owner] > 0;
+    }
+    // ------------------------------------------------------------------- //
+    // --------------------------- Internal  ------------------------------//
+    // ------------------------------------------------------------------- //
+
+    /// @dev Override _authorizeUpgrade function to add authorization
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
+
+    /// @dev Validate
+    function _validateRegistration() internal view {
+        LibRegistration.validate(
+            trafficController,
+            ITrafficController(trafficController).vehicleRegistration
+        );
+    }
+
+    /**
+     * @dev Internal function to find tokenId by vehiclePlateNo
+     */
+    function _findTokenIdByVehiclePlateNo(
+        string memory vehiclePlateNo
+    ) private view returns (uint256) {
+        LibStorage.VehicleRegistrationStorage storage vrs = LibStorage
+            .vehicleRegistrationStorage();
+        for (uint256 i = 1; i <= vrs.registrationCount; i++) {
+            if (
+                keccak256(bytes(vrs.tokenIdToVehiclePlateNo[i])) ==
+                keccak256(bytes(vehiclePlateNo))
+            ) {
+                return i;
+            }
+        }
+        revert Errors.NotFound();
+    }
+
+    /**
+     * @dev Internal function to update holder mappings when owner changes
+     */
+    function _updateHolderMapping(
+        uint256 tokenId,
+        address oldHolder,
+        address newHolder,
+        bool wasValid
+    ) private {
+        LibStorage.VehicleRegistrationStorage storage vrs = LibStorage
+            .vehicleRegistrationStorage();
+        string[] storage oldHolderPlates = vrs.addressToVehiclePlateNos[
+            oldHolder
+        ];
+        string memory plateNo = vrs.tokenIdToVehiclePlateNo[tokenId];
+        uint256 index = LibSharedFunctions.findIndexString(
+            oldHolderPlates,
+            plateNo
+        );
+        LibSharedFunctions.removeStringByIndex(oldHolderPlates, index);
+
+        if (oldHolderPlates.length == 0 && vrs.validBalance[oldHolder] == 0) {
+            vrs.holderCount--;
+        }
+
+        vrs.addressToVehiclePlateNos[newHolder].push(plateNo);
+        vrs.tokenToOwner[tokenId] = newHolder;
+
+        if (vrs.addressToVehiclePlateNos[newHolder].length == 1) {
+            vrs.holderCount++;
+        }
+
+        if (wasValid) {
+            vrs.validBalance[oldHolder]--;
+            vrs.validBalance[newHolder]++;
+        }
     }
 }

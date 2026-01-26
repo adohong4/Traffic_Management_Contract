@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+
 import "../constants/Constants.sol";
 import "../constants/Enum.sol";
 import "../constants/Success.sol";
@@ -17,7 +22,6 @@ import "../libraries/LibNFT.sol";
 import "../interfaces/external/IERC4671.sol";
 import "../interfaces/external/IDriverLicense.sol";
 import "../security/ReEntrancyGuard.sol";
-import "../security/AccessControl.sol";
 import "../libraries/LibRegistration.sol";
 import "../interfaces/ITrafficController.sol";
 
@@ -26,25 +30,33 @@ import "../interfaces/ITrafficController.sol";
  * @dev Manages driver licenses as ERC-4671 NFTs in the traffic management system
  */
 contract DriverLicense is
+    Initializable,
+    UUPSUpgradeable,
+    AccessControlUpgradeable,
+    ReentrancyGuardUpgradeable,
     IDriverLicense,
-    IERC4671,
-    ReEntrancyGuard,
-    AccessControl
+    IERC4671
 {
-    address public immutable trafficController;
-    // Constructor: grant role
-    constructor(address _trafficController) {
+    address public trafficController;
+
+    bytes32 public constant GOV_AGENCY_ROLE = keccak256("GOV_AGENCY_ROLE");
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    // initialize
+    function initialize(address _trafficController) public initializer {
+        __UUPSUpgradeable_init();
+        __AccessControl_init();
+        __ReentrancyGuard_init();
+
         trafficController = _trafficController;
-        _grantRole(ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(GOV_AGENCY_ROLE, msg.sender);
     }
 
-    function _validateRegistration() internal view {
-        LibRegistration.validate(
-            trafficController,
-            ITrafficController(trafficController).driverLicense
-        );
-    }
     /**
      * @dev Issues a new driver license as an ERC-4671 NFT
      */
@@ -376,5 +388,22 @@ contract DriverLicense is
     function hasValid(address owner) external view override returns (bool) {
         Validator.checkAddress(owner);
         return LibStorage.licenseStorage().validBalance[owner] > 0;
+    }
+
+    // ------------------------------------------------------------------- //
+    // --------------------------- Internal  ------------------------------//
+    // ------------------------------------------------------------------- //
+
+    /// @dev Override _authorizeUpgrade function to add authorization
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
+
+    /// @dev Validate
+    function _validateRegistration() internal view {
+        LibRegistration.validate(
+            trafficController,
+            ITrafficController(trafficController).driverLicense
+        );
     }
 }

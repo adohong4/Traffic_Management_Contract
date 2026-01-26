@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+
 import "../constants/Errors.sol";
 import "../constants/Enum.sol";
 import "../entities/structs/GovAgencyStruct.sol";
@@ -18,21 +23,32 @@ import "../interfaces/ITrafficController.sol";
  * @title GovAgencyFacet
  * @dev Manages government agency accounts in the traffic management system
  */
-contract GovAgency is IGovAgency, ReEntrancyGuard, AccessControl {
-    address public immutable trafficController;
+contract GovAgency is
+    Initializable,
+    UUPSUpgradeable,
+    AccessControlUpgradeable,
+    ReentrancyGuardUpgradeable,
+    IGovAgency
+{
+    address public trafficController;
 
-    // Constructor: grant role
-    constructor(address _trafficController) {
-        trafficController = _trafficController;
-        _grantRole(ADMIN_ROLE, msg.sender);
-        _grantRole(GOV_AGENCY_ROLE, msg.sender);
+    bytes32 public constant GOV_AGENCY_ROLE = keccak256("GOV_AGENCY_ROLE");
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
 
-    function _validateRegistration() internal view {
-        LibRegistration.validate(
-            trafficController,
-            ITrafficController(trafficController).govAgency
-        );
+    // Constructor: grant role
+    function initialize(address _trafficController) public initializer {
+        __UUPSUpgradeable_init();
+        __AccessControl_init();
+        __ReentrancyGuard_init();
+
+        trafficController = _trafficController;
+
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(GOV_AGENCY_ROLE, msg.sender);
     }
 
     /**
@@ -40,7 +56,7 @@ contract GovAgency is IGovAgency, ReEntrancyGuard, AccessControl {
      */
     function issueAgency(
         GovAgencyStruct.AgencyInput calldata input
-    ) external override nonReentrant onlyRole(ADMIN_ROLE) {
+    ) external override nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         _validateRegistration();
         LibStorage.GovAgencyStorage storage gas = LibStorage.govAgencyStorage();
 
@@ -84,7 +100,7 @@ contract GovAgency is IGovAgency, ReEntrancyGuard, AccessControl {
     function updateAgency(
         string memory _agencyId,
         GovAgencyStruct.AgencyUpdateInput calldata input
-    ) external override nonReentrant onlyRole(ADMIN_ROLE) {
+    ) external override nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         LibStorage.GovAgencyStorage storage gas = LibStorage.govAgencyStorage();
 
         // Validations
@@ -121,40 +137,11 @@ contract GovAgency is IGovAgency, ReEntrancyGuard, AccessControl {
     }
 
     /**
-     * @dev Internal function to update address mappings when agency address changes
-     */
-    function _updateAddressMapping(
-        string memory agencyId,
-        address oldAddress,
-        address newAddress
-    ) private {
-        LibStorage.GovAgencyStorage storage gas = LibStorage.govAgencyStorage();
-        string[] storage oldAgencyIds = gas.addressToAgencyIds[oldAddress];
-
-        // Find and remove agencyId from old address
-        for (uint256 i = 0; i < oldAgencyIds.length; ) {
-            if (
-                keccak256(bytes(oldAgencyIds[i])) == keccak256(bytes(agencyId))
-            ) {
-                oldAgencyIds[i] = oldAgencyIds[oldAgencyIds.length - 1];
-                oldAgencyIds.pop();
-                break;
-            }
-            unchecked {
-                ++i;
-            }
-        }
-
-        // Add agencyId to new address
-        gas.addressToAgencyIds[newAddress].push(agencyId);
-    }
-
-    /**
      * @dev Revokes an existing government agency
      */
     function revokeAgency(
         string calldata _agencyId
-    ) external override nonReentrant onlyRole(ADMIN_ROLE) {
+    ) external override nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         LibStorage.GovAgencyStorage storage gas = LibStorage.govAgencyStorage();
 
         // Validation
@@ -207,5 +194,51 @@ contract GovAgency is IGovAgency, ReEntrancyGuard, AccessControl {
             }
         }
         return allAgencies;
+    }
+
+    // ------------------------------------------------------------------- //
+    // --------------------------- Internal  ------------------------------//
+    // ------------------------------------------------------------------- //
+
+    /// @dev Override _authorizeUpgrade function to add authorization
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
+
+    /// @dev Validate
+    function _validateRegistration() internal view {
+        LibRegistration.validate(
+            trafficController,
+            ITrafficController(trafficController).govAgency
+        );
+    }
+
+    /**
+     * @dev Internal function to update address mappings when agency address changes
+     */
+    function _updateAddressMapping(
+        string memory agencyId,
+        address oldAddress,
+        address newAddress
+    ) private {
+        LibStorage.GovAgencyStorage storage gas = LibStorage.govAgencyStorage();
+        string[] storage oldAgencyIds = gas.addressToAgencyIds[oldAddress];
+
+        // Find and remove agencyId from old address
+        for (uint256 i = 0; i < oldAgencyIds.length; ) {
+            if (
+                keccak256(bytes(oldAgencyIds[i])) == keccak256(bytes(agencyId))
+            ) {
+                oldAgencyIds[i] = oldAgencyIds[oldAgencyIds.length - 1];
+                oldAgencyIds.pop();
+                break;
+            }
+            unchecked {
+                ++i;
+            }
+        }
+
+        // Add agencyId to new address
+        gas.addressToAgencyIds[newAddress].push(agencyId);
     }
 }

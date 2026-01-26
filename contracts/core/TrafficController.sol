@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import "../security/AccessControl.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+
 import "../constants/Errors.sol";
 import "../interfaces/ITrafficController.sol";
 
@@ -9,7 +12,12 @@ import "../interfaces/ITrafficController.sol";
 /// @notice Central registry and configuration contract for the Traffic Management system.
 /// Manages addresses of core contracts (GovAgency, VehicleRegistration, OffenceAndRenewal, DriverLicense).
 /// Only ADMIN_ROLE can update addresses or pause/unpause the system.
-contract TrafficController is AccessControl, ITrafficController {
+contract TrafficController is
+    Initializable,
+    UUPSUpgradeable,
+    AccessControlUpgradeable,
+    ITrafficController
+{
     // ============================== //
     //          State Variables       //
     // ============================== //
@@ -21,13 +29,25 @@ contract TrafficController is AccessControl, ITrafficController {
 
     bool public paused;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // ============================== //
-    //          Constructor           //
+    //          Initialize           //
     // ============================== //
 
-    constructor() {
-        _grantRole(ADMIN_ROLE, msg.sender);
+    function initialize() public initializer {
+        __UUPSUpgradeable_init();
+        __AccessControl_init();
+
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
+
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     // ============================== //
     //     External Set Functions     //
@@ -36,7 +56,7 @@ contract TrafficController is AccessControl, ITrafficController {
     /// @inheritdoc ITrafficController
     function setGovAgency(
         address _govAgency
-    ) external override onlyRole(ADMIN_ROLE) {
+    ) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_govAgency == address(0)) revert InvalidCoreContractAddress();
         emit CoreContractUpdated("GovAgency", govAgency, _govAgency);
         govAgency = _govAgency;
@@ -45,7 +65,7 @@ contract TrafficController is AccessControl, ITrafficController {
     /// @inheritdoc ITrafficController
     function setVehicleRegistration(
         address _vehicleRegistration
-    ) external override onlyRole(ADMIN_ROLE) {
+    ) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_vehicleRegistration == address(0))
             revert InvalidCoreContractAddress();
         emit CoreContractUpdated(
@@ -59,7 +79,7 @@ contract TrafficController is AccessControl, ITrafficController {
     /// @inheritdoc ITrafficController
     function setOffenceAndRenewal(
         address _offenceAndRenewal
-    ) external override onlyRole(ADMIN_ROLE) {
+    ) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_offenceAndRenewal == address(0))
             revert InvalidCoreContractAddress();
         emit CoreContractUpdated(
@@ -73,7 +93,7 @@ contract TrafficController is AccessControl, ITrafficController {
     /// @inheritdoc ITrafficController
     function setDriverLicense(
         address _driverLicense
-    ) external override onlyRole(ADMIN_ROLE) {
+    ) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_driverLicense == address(0)) revert InvalidCoreContractAddress();
         emit CoreContractUpdated(
             "DriverLicense",
@@ -84,13 +104,13 @@ contract TrafficController is AccessControl, ITrafficController {
     }
 
     /// @inheritdoc ITrafficController
-    function pause() external override onlyRole(ADMIN_ROLE) {
+    function pause() external override onlyRole(DEFAULT_ADMIN_ROLE) {
         paused = true;
         emit SystemPaused(msg.sender);
     }
 
     /// @inheritdoc ITrafficController
-    function unpause() external override onlyRole(ADMIN_ROLE) {
+    function unpause() external override onlyRole(DEFAULT_ADMIN_ROLE) {
         paused = false;
         emit SystemUnpaused(msg.sender);
     }

@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+
 import "../interfaces/external/IOffenceRenewal.sol";
 import "../entities/structs/OffenceAndRenewal.sol";
 import "../interfaces/ITrafficController.sol";
@@ -10,22 +15,32 @@ import "../utils/Validator.sol";
 import "../utils/DateTime.sol";
 import "../utils/Loggers.sol";
 import "../security/ReEntrancyGuard.sol";
-import "../security/AccessControl.sol";
 
-contract OffenceAndRenewal is IOffenceRenewal, ReEntrancyGuard, AccessControl {
-    address public immutable trafficController;
+contract OffenceAndRenewal is
+    Initializable,
+    UUPSUpgradeable,
+    AccessControlUpgradeable,
+    ReentrancyGuardUpgradeable,
+    IOffenceRenewal
+{
+    address public trafficController;
 
-    constructor(address _trafficController) {
-        trafficController = _trafficController;
-        _grantRole(ADMIN_ROLE, msg.sender);
-        _grantRole(GOV_AGENCY_ROLE, msg.sender);
+    bytes32 public constant GOV_AGENCY_ROLE = keccak256("GOV_AGENCY_ROLE");
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
 
-    function _validateRegistration() internal view {
-        LibRegistration.validate(
-            trafficController,
-            ITrafficController(trafficController).offenceAndRenewal
-        );
+    // Initializer: grant role
+    function initialize(address _trafficController) public initializer {
+        __UUPSUpgradeable_init();
+        __AccessControl_init();
+        __ReentrancyGuard_init();
+
+        trafficController = _trafficController;
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(GOV_AGENCY_ROLE, msg.sender);
     }
 
     function addRenewRule(
@@ -348,5 +363,22 @@ contract OffenceAndRenewal is IOffenceRenewal, ReEntrancyGuard, AccessControl {
         }
 
         Loggers.logSuccess("All license statuses updated");
+    }
+
+    // ------------------------------------------------------------------- //
+    // --------------------------- Internal  ------------------------------//
+    // ------------------------------------------------------------------- //
+
+    /// @dev Override _authorizeUpgrade function to add authorization
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
+
+    /// @dev Validate OffenceAndRenewal contract registration in TrafficController
+    function _validateRegistration() internal view {
+        LibRegistration.validate(
+            trafficController,
+            ITrafficController(trafficController).offenceAndRenewal
+        );
     }
 }
