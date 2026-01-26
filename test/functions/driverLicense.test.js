@@ -27,7 +27,7 @@ describe("DriverLicense Functions", function () {
 
     const license = await dl.getLicense("DL123456");
     expect(license.licenseNo).to.equal("DL123456");
-    expect(Number(license.point)).to.equal(12);
+    expect(license.point.toNumber()).to.equal(12); // ethers v5 trả về BigNumber
   });
 
   it("reverts when license already exists", async function () {

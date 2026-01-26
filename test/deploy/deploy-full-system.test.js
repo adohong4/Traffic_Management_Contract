@@ -9,14 +9,14 @@ describe("Full System Deployment", function () {
   });
 
   it("deploys all contracts successfully", async function () {
-    expect(await controller.govAgency()).to.equal(await gov.getAddress());
-    expect(await controller.driverLicense()).to.equal(await dl.getAddress());
-    expect(await controller.vehicleRegistration()).to.equal(await vreg.getAddress());
-    expect(await controller.offenceAndRenewal()).to.equal(await offence.getAddress());
+    expect(await controller.govAgency()).to.equal(gov.address);
+    expect(await controller.driverLicense()).to.equal(dl.address);
+    expect(await controller.vehicleRegistration()).to.equal(vreg.address);
+    expect(await controller.offenceAndRenewal()).to.equal(offence.address);
   });
 
   it("deployer has GOV_AGENCY_ROLE in all contracts", async function () {
-    const role = ethers.keccak256(ethers.toUtf8Bytes("GOV_AGENCY_ROLE"));
+    const role = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("GOV_AGENCY_ROLE"));
     expect(await gov.hasRole(role, deployer.address)).to.be.true;
     expect(await vreg.hasRole(role, deployer.address)).to.be.true;
     expect(await offence.hasRole(role, deployer.address)).to.be.true;

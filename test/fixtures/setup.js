@@ -5,41 +5,72 @@ async function deployFullSystem() {
 
   // Deploy TrafficController proxy
   const TrafficController = await ethers.getContractFactory("TrafficController");
-  const controllerProxy = await upgrades.deployProxy(TrafficController, [], { initializer: "initialize", kind: "uups" });
-  await controllerProxy.waitForDeployment();
+  const controllerProxy = await upgrades.deployProxy(
+    TrafficController,
+    [],
+    { initializer: "initialize", kind: "uups" }
+  );
+  await controllerProxy.deployed(); // ethers v5 dùng .deployed()
 
   // Deploy DriverLicense proxy
   const DriverLicense = await ethers.getContractFactory("DriverLicense");
-  const dlProxy = await upgrades.deployProxy(DriverLicense, [await controllerProxy.getAddress()], { initializer: "initialize", kind: "uups" });
-  await dlProxy.waitForDeployment();
-  await controllerProxy.setDriverLicense(await dlProxy.getAddress());
+  const dlProxy = await upgrades.deployProxy(
+    DriverLicense,
+    [controllerProxy.address], // ethers v5 dùng .address thay vì getAddress()
+    { initializer: "initialize", kind: "uups" }
+  );
+  await dlProxy.deployed();
+
+  await controllerProxy.setDriverLicense(dlProxy.address);
 
   // Deploy GovAgency proxy
   const GovAgency = await ethers.getContractFactory("GovAgency");
-  const govProxy = await upgrades.deployProxy(GovAgency, [await controllerProxy.getAddress()], { initializer: "initialize", kind: "uups" });
-  await govProxy.waitForDeployment();
-  await controllerProxy.setGovAgency(await govProxy.getAddress());
+  const govProxy = await upgrades.deployProxy(
+    GovAgency,
+    [controllerProxy.address],
+    { initializer: "initialize", kind: "uups" }
+  );
+  await govProxy.deployed();
+
+  await controllerProxy.setGovAgency(govProxy.address);
 
   // Deploy VehicleRegistration proxy
   const VehicleRegistration = await ethers.getContractFactory("VehicleRegistration");
-  const vregProxy = await upgrades.deployProxy(VehicleRegistration, [await controllerProxy.getAddress()], { initializer: "initialize", kind: "uups" });
-  await vregProxy.waitForDeployment();
-  await controllerProxy.setVehicleRegistration(await vregProxy.getAddress());
+  const vregProxy = await upgrades.deployProxy(
+    VehicleRegistration,
+    [controllerProxy.address],
+    { initializer: "initialize", kind: "uups" }
+  );
+  await vregProxy.deployed();
+
+  await controllerProxy.setVehicleRegistration(vregProxy.address);
 
   // Deploy OffenceAndRenewal proxy
   const OffenceAndRenewal = await ethers.getContractFactory("OffenceAndRenewal");
-  const offenceProxy = await upgrades.deployProxy(OffenceAndRenewal, [await controllerProxy.getAddress()], { initializer: "initialize", kind: "uups" });
-  await offenceProxy.waitForDeployment();
-  await controllerProxy.setOffenceAndRenewal(await offenceProxy.getAddress());
+  const offenceProxy = await upgrades.deployProxy(
+    OffenceAndRenewal,
+    [controllerProxy.address],
+    { initializer: "initialize", kind: "uups" }
+  );
+  await offenceProxy.deployed();
+
+  await controllerProxy.setOffenceAndRenewal(offenceProxy.address);
 
   // Grant GOV_AGENCY_ROLE cho deployer ở tất cả proxy
-  const govRole = ethers.keccak256(ethers.toUtf8Bytes("GOV_AGENCY_ROLE"));
+  const govRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("GOV_AGENCY_ROLE"));
   await govProxy.grantRole(govRole, deployer.address);
   await vregProxy.grantRole(govRole, deployer.address);
   await offenceProxy.grantRole(govRole, deployer.address);
   await dlProxy.grantRole(govRole, deployer.address);
 
-  return { deployer, controllerProxy, dlProxy, govProxy, vregProxy, offenceProxy };
+  return {
+    deployer,
+    controller: controllerProxy,   // đổi tên cho dễ đọc trong test
+    dl: dlProxy,
+    gov: govProxy,
+    vreg: vregProxy,
+    offence: offenceProxy,
+  };
 }
 
 module.exports = { deployFullSystem };
