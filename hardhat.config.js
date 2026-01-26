@@ -3,7 +3,7 @@ require("@openzeppelin/hardhat-upgrades");
 require("@nomicfoundation/hardhat-chai-matchers");
 require("dotenv").config(); 
 
-const { PRIVATE_KEY, SEPOLIA_RPC_URL, ETHERSCAN_API_KEY } = process.env;
+const { PRIVATE_KEY, ETH_SEPOLIA_RPC_URL, ETHERSCAN_API_KEY } = process.env;
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -30,7 +30,7 @@ module.exports = {
     },
 
     sepolia: {
-      url: SEPOLIA_RPC_URL || "https://rpc.sepolia.org",
+      url: ETH_SEPOLIA_RPC_URL || "https://rpc.sepolia.org",
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
       chainId: 11155111,
     },
