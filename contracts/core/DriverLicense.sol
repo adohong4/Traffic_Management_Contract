@@ -1,37 +1,47 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import "../../constants/Constants.sol";
-import "../../constants/Enum.sol";
-import "../../constants/Success.sol";
-import "../../constants/NFTConstants.sol";
-import "../../entities/structs/DriverLicenseStruct.sol";
-import "../../utils/Validator.sol";
-import "../../utils/DateTime.sol";
-import "../../utils/Loggers.sol";
-import "../../utils/NFTUtils.sol";
-import "../../libraries/LibStorage.sol";
-import "../../libraries/LibAccessControl.sol";
-import "../../libraries/LibSharedFunctions.sol";
-import "../../libraries/LibNFT.sol";
-import "../../interfaces/external/IERC4671.sol";
-import "../../interfaces/external/IDriverLicense.sol";
-import "../../security/ReEntrancyGuard.sol";
+import "../constants/Constants.sol";
+import "../constants/Enum.sol";
+import "../constants/Success.sol";
+import "../constants/NFTConstants.sol";
+import "../entities/structs/DriverLicenseStruct.sol";
+import "../utils/Validator.sol";
+import "../utils/DateTime.sol";
+import "../utils/Loggers.sol";
+import "../utils/NFTUtils.sol";
+import "../libraries/LibStorage.sol";
+import "../libraries/LibAccessControl.sol";
+import "../libraries/LibSharedFunctions.sol";
+import "../libraries/LibNFT.sol";
+import "../interfaces/external/IERC4671.sol";
+import "../interfaces/external/IDriverLicense.sol";
+import "../security/ReEntrancyGuard.sol";
 
 /**
  * @title DriverLicenseFacet
  * @dev Manages driver licenses as ERC-4671 NFTs in the traffic management system
  */
-contract DriverLicenseFacet is IDriverLicense, IERC4671, ReEntrancyGuard {
+contract DriverLicense is IDriverLicense, IERC4671, ReEntrancyGuard {
     // Events for ERC-4671
-    event LicenseIssued(string indexed licenseNo, address indexed holder, uint256 issueDate);
-    event LicenseUpdated(string indexed licenseNo, uint256 newExpiryDate, Enum.LicenseStatus newStatus);
+    event LicenseIssued(
+        string indexed licenseNo,
+        address indexed holder,
+        uint256 issueDate
+    );
+    event LicenseUpdated(
+        string indexed licenseNo,
+        uint256 newExpiryDate,
+        Enum.LicenseStatus newStatus
+    );
     event LicenseRevoked(string indexed licenseNo, uint256 timestamp);
 
     /**
      * @dev Issues a new driver license as an ERC-4671 NFT
      */
-    function issueLicense(DriverLicenseStruct.LicenseInput calldata input) external override nonReentrant {
+    function issueLicense(
+        DriverLicenseStruct.LicenseInput calldata input
+    ) external override nonReentrant {
         //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
 
@@ -42,7 +52,8 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671, ReEntrancyGuard {
         Validator.checkString(input.authorityId);
         Validator.checkPoints(input.point);
 
-        if (bytes(ls.licenses[input.licenseNo].licenseNo).length != 0) revert Errors.AlreadyExists();
+        if (bytes(ls.licenses[input.licenseNo].licenseNo).length != 0)
+            revert Errors.AlreadyExists();
         if (input.issueDate > input.expiryDate) revert Errors.InvalidInput();
 
         uint256 tokenId = ls.tokenCount + 1;
@@ -62,7 +73,9 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671, ReEntrancyGuard {
             input.point
         );
 
-        uint256[] storage holderTokens = ls.holderToTokenIds[input.holderAddress];
+        uint256[] storage holderTokens = ls.holderToTokenIds[
+            input.holderAddress
+        ];
         if (holderTokens.length >= 12) revert Errors.InvalidInput();
 
         holderTokens.push(tokenId);
@@ -75,14 +88,20 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671, ReEntrancyGuard {
 
         Loggers.logSuccess("License issued successfully");
 
-        emit LicenseIssued(input.licenseNo, input.holderAddress, input.issueDate);
+        emit LicenseIssued(
+            input.licenseNo,
+            input.holderAddress,
+            input.issueDate
+        );
         emit IERC4671.Issued(input.holderAddress, tokenId);
     }
 
     /**
      * @dev Updates an existing license
      */
-    function updateLicense(DriverLicenseStruct.LicenseUpdateInput calldata input) external override nonReentrant {
+    function updateLicense(
+        DriverLicenseStruct.LicenseUpdateInput calldata input
+    ) external override nonReentrant {
         //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
 
@@ -90,16 +109,25 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671, ReEntrancyGuard {
         Validator.checkString(input.licenseNo);
         Validator.checkAddress(input.holderAddress);
         Validator.checkPoints(input.point);
-        if (bytes(ls.licenses[input.licenseNo].licenseNo).length == 0) revert Errors.NotFound();
+        if (bytes(ls.licenses[input.licenseNo].licenseNo).length == 0)
+            revert Errors.NotFound();
 
-        DriverLicenseStruct.DriverLicense storage license = ls.licenses[input.licenseNo];
-        bool wasValid = license.status == Enum.LicenseStatus.ACTIVE && !DateTime.isExpired(license.expiryDate);
+        DriverLicenseStruct.DriverLicense storage license = ls.licenses[
+            input.licenseNo
+        ];
+        bool wasValid = license.status == Enum.LicenseStatus.ACTIVE &&
+            !DateTime.isExpired(license.expiryDate);
         if (input.expiryDate < license.issueDate) revert Errors.InvalidInput();
 
         // Update holder mappings if holder changes
         if (license.holderAddress != input.holderAddress) {
             uint256 tokenId = license.tokenId;
-            _updateHolderMapping(tokenId, license.holderAddress, input.holderAddress, wasValid);
+            _updateHolderMapping(
+                tokenId,
+                license.holderAddress,
+                input.holderAddress,
+                wasValid
+            );
             license.holderAddress = input.holderAddress;
         }
 
@@ -111,7 +139,8 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671, ReEntrancyGuard {
         license.point = input.point;
 
         // Update valid balance
-        bool isValid = input.status == Enum.LicenseStatus.ACTIVE && !DateTime.isExpired(input.expiryDate);
+        bool isValid = input.status == Enum.LicenseStatus.ACTIVE &&
+            !DateTime.isExpired(input.expiryDate);
         if (wasValid && !isValid) {
             ls.validBalance[input.holderAddress]--;
         } else if (!wasValid && isValid) {
@@ -127,7 +156,12 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671, ReEntrancyGuard {
     /**
      * @dev Internal function to update holder mappings when holder changes
      */
-    function _updateHolderMapping(uint256 tokenId, address oldHolder, address newHolder, bool wasValid) private {
+    function _updateHolderMapping(
+        uint256 tokenId,
+        address oldHolder,
+        address newHolder,
+        bool wasValid
+    ) private {
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
         uint256[] storage oldHolderTokens = ls.holderToTokenIds[oldHolder];
         uint256 index = LibSharedFunctions.findIndex(oldHolderTokens, tokenId);
@@ -149,16 +183,22 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671, ReEntrancyGuard {
     /**
      * @dev Revokes a License
      */
-    function revokeLicense(string calldata _licenseNo) external override nonReentrant {
+    function revokeLicense(
+        string calldata _licenseNo
+    ) external override nonReentrant {
         //LibAccessControl.enforceRole(keccak256("GOV_AGENCY_ROLE"));
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
 
         // Validation
         Validator.checkString(_licenseNo);
-        if (bytes(ls.licenses[_licenseNo].licenseNo).length == 0) revert Errors.NotFound();
+        if (bytes(ls.licenses[_licenseNo].licenseNo).length == 0)
+            revert Errors.NotFound();
 
-        DriverLicenseStruct.DriverLicense storage license = ls.licenses[_licenseNo];
-        bool wasValid = license.status == Enum.LicenseStatus.ACTIVE && !DateTime.isExpired(license.expiryDate);
+        DriverLicenseStruct.DriverLicense storage license = ls.licenses[
+            _licenseNo
+        ];
+        bool wasValid = license.status == Enum.LicenseStatus.ACTIVE &&
+            !DateTime.isExpired(license.expiryDate);
 
         license.status = Enum.LicenseStatus.REVOKED;
         if (wasValid) {
@@ -177,7 +217,12 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671, ReEntrancyGuard {
     /**
      * @dev Get all licenses
      */
-    function getAllLicenses() external view override returns (DriverLicenseStruct.DriverLicense[] memory) {
+    function getAllLicenses()
+        external
+        view
+        override
+        returns (DriverLicenseStruct.DriverLicense[] memory)
+    {
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
         uint256 tokenCount = ls.tokenCount;
         uint256 validCount = 0;
@@ -185,19 +230,28 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671, ReEntrancyGuard {
         // Đếm số giấy phép hợp lệ
         for (uint256 i = 1; i <= tokenCount; i++) {
             string memory licenseNo = ls.tokenIdToLicenseNo[i];
-            if (bytes(licenseNo).length > 0 && bytes(ls.licenses[licenseNo].licenseNo).length > 0) {
+            if (
+                bytes(licenseNo).length > 0 &&
+                bytes(ls.licenses[licenseNo].licenseNo).length > 0
+            ) {
                 validCount++;
             }
         }
 
         // Tạo mảng kết quả với kích thước chính xác
-        DriverLicenseStruct.DriverLicense[] memory allLicenses = new DriverLicenseStruct.DriverLicense[](validCount);
+        DriverLicenseStruct.DriverLicense[]
+            memory allLicenses = new DriverLicenseStruct.DriverLicense[](
+                validCount
+            );
         uint256 index = 0;
 
         // Lấy các giấy phép hợp lệ
         for (uint256 i = 1; i <= tokenCount; i++) {
             string memory licenseNo = ls.tokenIdToLicenseNo[i];
-            if (bytes(licenseNo).length > 0 && bytes(ls.licenses[licenseNo].licenseNo).length > 0) {
+            if (
+                bytes(licenseNo).length > 0 &&
+                bytes(ls.licenses[licenseNo].licenseNo).length > 0
+            ) {
                 allLicenses[index] = ls.licenses[licenseNo];
                 index++;
             }
@@ -208,7 +262,9 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671, ReEntrancyGuard {
     /**
      * @dev Retrieves licenses by holder address
      */
-    function getLicensesByHolder(address _holderAddress)
+    function getLicensesByHolder(
+        address _holderAddress
+    )
         external
         view
         override
@@ -218,9 +274,12 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671, ReEntrancyGuard {
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
         uint256[] memory tokenIds = ls.holderToTokenIds[_holderAddress];
         uint256 len = tokenIds.length;
-        DriverLicenseStruct.DriverLicense[] memory holderLicenses = new DriverLicenseStruct.DriverLicense[](len);
+        DriverLicenseStruct.DriverLicense[]
+            memory holderLicenses = new DriverLicenseStruct.DriverLicense[](
+                len
+            );
 
-        for (uint256 i = 0; i < len;) {
+        for (uint256 i = 0; i < len; ) {
             holderLicenses[i] = ls.licenses[ls.tokenIdToLicenseNo[tokenIds[i]]];
             unchecked {
                 ++i;
@@ -232,14 +291,17 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671, ReEntrancyGuard {
     /**
      * @dev Retrieves a license by licenseNo
      */
-    function getLicense(string calldata _licenseNo)
+    function getLicense(
+        string calldata _licenseNo
+    )
         external
         view
         override
         returns (DriverLicenseStruct.DriverLicense memory)
     {
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
-        if (bytes(ls.licenses[_licenseNo].licenseNo).length == 0) revert Errors.NotFound();
+        if (bytes(ls.licenses[_licenseNo].licenseNo).length == 0)
+            revert Errors.NotFound();
         return ls.licenses[_licenseNo];
     }
 
@@ -275,8 +337,12 @@ contract DriverLicenseFacet is IDriverLicense, IERC4671, ReEntrancyGuard {
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
         string memory licenseNo = ls.tokenIdToLicenseNo[tokenId];
         if (bytes(licenseNo).length == 0) revert Errors.NotFound();
-        DriverLicenseStruct.DriverLicense memory license = ls.licenses[licenseNo];
-        return license.status == Enum.LicenseStatus.ACTIVE && !DateTime.isExpired(license.expiryDate);
+        DriverLicenseStruct.DriverLicense memory license = ls.licenses[
+            licenseNo
+        ];
+        return
+            license.status == Enum.LicenseStatus.ACTIVE &&
+            !DateTime.isExpired(license.expiryDate);
     }
 
     /**
