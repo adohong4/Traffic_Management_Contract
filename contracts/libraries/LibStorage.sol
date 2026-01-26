@@ -13,13 +13,17 @@ import "../constants/Enum.sol";
  */
 library LibStorage {
     // Storage position for government agency data
-    bytes32 constant GOV_AGENCY_STORAGE_POSITION = keccak256("diamond.storage.GovAgency");
+    bytes32 constant GOV_AGENCY_STORAGE_POSITION =
+        keccak256("traffic.storage.GovAgency");
     // Storage position for driver license data
-    bytes32 constant LICENSE_STORAGE_POSITION = keccak256("diamond.storage.DriverLicense");
+    bytes32 constant LICENSE_STORAGE_POSITION =
+        keccak256("traffic.storage.DriverLicense");
     // Storage position for offense and renewal data
-    bytes32 constant OFFENSE_RENEWAL_STORAGE_POSITION = keccak256("diamond.storage.OffenseRenewal");
+    bytes32 constant OFFENSE_RENEWAL_STORAGE_POSITION =
+        keccak256("traffic.storage.OffenseRenewal");
     // Storage position for vehicle registration data
-    bytes32 constant VEHICLE_REGISTRATION_STORAGE_POSITION = keccak256("diamond.storage.VehicleRegistration");
+    bytes32 constant VEHICLE_REGISTRATION_STORAGE_POSITION =
+        keccak256("traffic.storage.VehicleRegistration");
 
     // Storage struct for government agency data
     struct GovAgencyStorage {
@@ -32,7 +36,11 @@ library LibStorage {
     /**
      * @dev Returns the government agency storage
      */
-    function govAgencyStorage() internal pure returns (GovAgencyStorage storage gas) {
+    function govAgencyStorage()
+        internal
+        pure
+        returns (GovAgencyStorage storage gas)
+    {
         bytes32 position = GOV_AGENCY_STORAGE_POSITION;
         assembly {
             gas.slot := position
@@ -54,7 +62,11 @@ library LibStorage {
     /**
      * @dev Returns the license storage
      */
-    function licenseStorage() internal pure returns (LicenseStorage storage ls) {
+    function licenseStorage()
+        internal
+        pure
+        returns (LicenseStorage storage ls)
+    {
         bytes32 position = LICENSE_STORAGE_POSITION;
         assembly {
             ls.slot := position
@@ -72,7 +84,11 @@ library LibStorage {
     /**
      * @dev Returns the offense and renewal storage
      */
-    function offenseRenewalStorage() internal pure returns (OffenseRenewalStorage storage ors) {
+    function offenseRenewalStorage()
+        internal
+        pure
+        returns (OffenseRenewalStorage storage ors)
+    {
         bytes32 position = OFFENSE_RENEWAL_STORAGE_POSITION;
         assembly {
             ors.slot := position
@@ -95,7 +111,11 @@ library LibStorage {
     /**
      * @dev Returns the vehicle registration storage
      */
-    function vehicleRegistrationStorage() internal pure returns (VehicleRegistrationStorage storage vrs) {
+    function vehicleRegistrationStorage()
+        internal
+        pure
+        returns (VehicleRegistrationStorage storage vrs)
+    {
         bytes32 position = VEHICLE_REGISTRATION_STORAGE_POSITION;
         assembly {
             vrs.slot := position
