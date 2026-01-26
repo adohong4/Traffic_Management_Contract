@@ -11,16 +11,28 @@ import "../libraries/LibAccessControl.sol";
 import "../interfaces/external/IGovAgency.sol";
 import "../security/ReEntrancyGuard.sol";
 import "../security/AccessControl.sol";
+import "../libraries/LibRegistration.sol";
+import "../interfaces/ITrafficController.sol";
 
 /**
  * @title GovAgencyFacet
  * @dev Manages government agency accounts in the traffic management system
  */
 contract GovAgency is IGovAgency, ReEntrancyGuard, AccessControl {
+    address public immutable trafficController;
+
     // Constructor: grant role
-    constructor() {
+    constructor(address _trafficController) {
+        trafficController = _trafficController;
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(GOV_AGENCY_ROLE, msg.sender);
+    }
+
+    function _validateRegistration() internal view {
+        LibRegistration.validate(
+            trafficController,
+            ITrafficController(trafficController).govAgency
+        );
     }
 
     /**
@@ -29,6 +41,7 @@ contract GovAgency is IGovAgency, ReEntrancyGuard, AccessControl {
     function issueAgency(
         GovAgencyStruct.AgencyInput calldata input
     ) external override nonReentrant onlyRole(ADMIN_ROLE) {
+        _validateRegistration();
         LibStorage.GovAgencyStorage storage gas = LibStorage.govAgencyStorage();
 
         // Validations

@@ -18,6 +18,8 @@ import "../interfaces/external/IERC4671.sol";
 import "../interfaces/external/IVehicleRegistration.sol";
 import "../security/ReEntrancyGuard.sol";
 import "../security/AccessControl.sol";
+import "../libraries/LibRegistration.sol";
+import "../interfaces/ITrafficController.sol";
 
 contract VehicleRegistration is
     IVehicleRegistration,
@@ -25,10 +27,20 @@ contract VehicleRegistration is
     ReEntrancyGuard,
     AccessControl
 {
+    address public immutable trafficController;
+
     // Constructor: grant role
-    constructor() {
+    constructor(address _trafficController) {
+        trafficController = _trafficController;
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(GOV_AGENCY_ROLE, msg.sender);
+    }
+
+    function _validateRegistration() internal view {
+        LibRegistration.validate(
+            trafficController,
+            ITrafficController(trafficController).vehicleRegistration
+        );
     }
 
     /**

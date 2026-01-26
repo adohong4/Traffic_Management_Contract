@@ -18,6 +18,8 @@ import "../interfaces/external/IERC4671.sol";
 import "../interfaces/external/IDriverLicense.sol";
 import "../security/ReEntrancyGuard.sol";
 import "../security/AccessControl.sol";
+import "../libraries/LibRegistration.sol";
+import "../interfaces/ITrafficController.sol";
 
 /**
  * @title DriverLicenseFacet
@@ -29,18 +31,27 @@ contract DriverLicense is
     ReEntrancyGuard,
     AccessControl
 {
+    address public immutable trafficController;
     // Constructor: grant role
-    constructor() {
+    constructor(address _trafficController) {
+        trafficController = _trafficController;
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(GOV_AGENCY_ROLE, msg.sender);
     }
 
+    function _validateRegistration() internal view {
+        LibRegistration.validate(
+            trafficController,
+            ITrafficController(trafficController).driverLicense
+        );
+    }
     /**
      * @dev Issues a new driver license as an ERC-4671 NFT
      */
     function issueLicense(
         DriverLicenseStruct.LicenseInput calldata input
     ) external override nonReentrant onlyRole(GOV_AGENCY_ROLE) {
+        _validateRegistration();
         LibStorage.LicenseStorage storage ls = LibStorage.licenseStorage();
 
         Validator.checkString(input.licenseNo);
