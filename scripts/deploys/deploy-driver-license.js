@@ -1,11 +1,17 @@
 //npx hardhat run scripts/deploys/deploy-driver-license.js --network localhost
-const hre = require("hardhat");
+const { ethers, upgrades } = require("hardhat");
 
 async function main() {
-  const OffenceAndRenewal = await hre.ethers.getContractFactory("OffenceAndRenewal");
-  const contract = await OffenceAndRenewal.deploy();
-  await contract.waitForDeployment();
-  console.log("OffenceAndRenewal deployed to:", await contract.getAddress());
+  const DriverLicense = await ethers.getContractFactory("DriverLicense");
+
+  const proxy = await upgrades.deployProxy(DriverLicense, ["0x3Aa5ebB10DC797CAC828524e59A333d0A371443c"], { initializer: "initialize", kind: "uups" });
+  await proxy.waitForDeployment();
+
+  const proxyAddr = await proxy.getAddress();
+  const implAddr = await upgrades.erc1967.getImplementationAddress(proxyAddr);
+
+  console.log("DriverLicense Proxy:", proxyAddr);
+  console.log("Implementation:", implAddr);
 }
 
 main().catch((error) => {
