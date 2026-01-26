@@ -19,7 +19,7 @@ import "../interfaces/external/IVehicleRegistration.sol";
 import "../security/ReEntrancyGuard.sol";
 import "../security/AccessControl.sol";
 
-abstract contract VehicleRegistration is
+contract VehicleRegistration is
     IVehicleRegistration,
     IERC4671,
     ReEntrancyGuard,
