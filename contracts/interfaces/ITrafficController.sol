@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import "../constants/Errors.sol";
 
 /// @title ITrafficController
-/// @notice Interface for the TrafficController contract, which acts as the central registry
+/// @notice Interface for the TrafficController contract, acting as the central registry
 /// for managing addresses of core contracts in the Traffic Management system.
 interface ITrafficController {
     // ============================== //
@@ -58,7 +58,7 @@ interface ITrafficController {
     /// @param _offenceAndRenewal New address of OffenceAndRenewal
     function setOffenceAndRenewal(address _offenceAndRenewal) external;
 
-    /// @notice Sets / updates the address of DriverLicense contract (if separated)
+    /// @notice Sets / updates the address of DriverLicense contract
     /// @param _driverLicense New address of DriverLicense
     function setDriverLicense(address _driverLicense) external;
 
@@ -94,16 +94,38 @@ interface ITrafficController {
 
     /// @notice Checks if a given address is registered as GovAgency
     /// @param _addr Address to check
-    /// @return True if _addr is the current GovAgency
+    /// @return True if _addr is the current GovAgency and not zero
     function isGovAgency(address _addr) external view returns (bool);
 
     /// @notice Checks if a given address is registered as VehicleRegistration
     /// @param _addr Address to check
-    /// @return True if _addr is the current VehicleRegistration
+    /// @return True if _addr is the current VehicleRegistration and not zero
     function isVehicleRegistration(address _addr) external view returns (bool);
 
     /// @notice Checks if a given address is registered as OffenceAndRenewal
     /// @param _addr Address to check
-    /// @return True if _addr is the current OffenceAndRenewal
+    /// @return True if _addr is the current OffenceAndRenewal and not zero
     function isOffenceAndRenewal(address _addr) external view returns (bool);
+
+    /// @notice Checks if a given address is registered as DriverLicense
+    /// @param _addr Address to check
+    /// @return True if _addr is the current DriverLicense and not zero
+    function isDriverLicense(address _addr) external view returns (bool);
+
+    /// @notice Returns all registered core contract addresses in a struct/array format
+    /// @return govAgencyAddr GovAgency address
+    /// @return vehicleRegistrationAddr VehicleRegistration address
+    /// @return offenceAndRenewalAddr OffenceAndRenewal address
+    /// @return driverLicenseAddr DriverLicense address
+    /// @return pausedStatus Current pause status
+    function getAllCoreContracts()
+        external
+        view
+        returns (
+            address govAgencyAddr,
+            address vehicleRegistrationAddr,
+            address offenceAndRenewalAddr,
+            address driverLicenseAddr,
+            bool pausedStatus
+        );
 }

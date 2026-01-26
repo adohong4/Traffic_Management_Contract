@@ -7,7 +7,7 @@ import "../interfaces/ITrafficController.sol";
 
 /// @title TrafficController
 /// @notice Central registry and configuration contract for the Traffic Management system.
-/// Manages addresses of core contracts (GovAgency, VehicleRegistration, OffenceAndRenewal, ...).
+/// Manages addresses of core contracts (GovAgency, VehicleRegistration, OffenceAndRenewal, DriverLicense).
 /// Only ADMIN_ROLE can update addresses or pause/unpause the system.
 contract TrafficController is AccessControl, ITrafficController {
     // ============================== //
@@ -122,5 +122,34 @@ contract TrafficController is AccessControl, ITrafficController {
         address _addr
     ) external view override returns (bool) {
         return _addr == offenceAndRenewal && offenceAndRenewal != address(0);
+    }
+
+    /// @inheritdoc ITrafficController
+    function isDriverLicense(
+        address _addr
+    ) external view override returns (bool) {
+        return _addr == driverLicense && driverLicense != address(0);
+    }
+
+    /// @inheritdoc ITrafficController
+    function getAllCoreContracts()
+        external
+        view
+        override
+        returns (
+            address govAgencyAddr,
+            address vehicleRegistrationAddr,
+            address offenceAndRenewalAddr,
+            address driverLicenseAddr,
+            bool pausedStatus
+        )
+    {
+        return (
+            govAgency,
+            vehicleRegistration,
+            offenceAndRenewal,
+            driverLicense,
+            paused
+        );
     }
 }
