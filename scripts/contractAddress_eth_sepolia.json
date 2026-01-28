@@ -1,0 +1,16 @@
+{
+  "TrafficController": "0xd7e05D8de832bc229BA6787E882bF83C2171774b",
+  "TrafficController_Implementation": "0xC1eE163967fa6B27629170DCc04935CC1D809A40",
+
+  "DriverLicense": "0xFFB4B88f5881c911973bd8bEbBa58d54ADAe330a",
+  "DriverLicense_Implementation": "0x2f63b05C8F8ED3A453d485c1Df35E29CF3e558F2",
+
+  "OffenceAndRenewal": "0xcf54c1Ca03fB2666E3fBACF969651CEC5C5125cF",
+  "OffenceAndRenewal_Implementation": "0xE3087d41D762729E5e586B485E10a33C519B65E6",
+
+  "VehicleRegistration": "0x34430483Ed96E3475E130d7E3e198E6d65458DEA",
+  "VehicleRegistration_Implementation": "0x845c0E835072B5A3114783d90629Bc73D1c11104",
+
+  "GovAgency": "0x2853573Cf826D5488B6Da07F661A251D6F413DEb",
+  "GovAgency_Implementation": "0x76526B0Ab4C521B8f9F24D93951d3ED66f98ff63"
+}

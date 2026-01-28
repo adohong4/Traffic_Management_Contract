@@ -1,10 +1,10 @@
 // npx hardhat run scripts/functions/controller/read-controller-state.js --network localhost
-const hre = require("hardhat");
+const { ethers } = require("hardhat");
 
 async function main() {
-  const CONTROLLER_PROXY = "0x3Aa5ebB10DC797CAC828524e59A333d0A371443c";
+  const CONTROLLER_PROXY = "0xd7e05D8de832bc229BA6787E882bF83C2171774b";
 
-  const controller = await hre.ethers.getContractAt(
+  const controller = await ethers.getContractAt(
     "TrafficController",
     CONTROLLER_PROXY
   );
@@ -14,13 +14,13 @@ async function main() {
   // ------------------------------
   // getAllCoreContracts
   // ------------------------------
-  const [
-    govAgency,
-    vehicleRegistration,
-    offenceAndRenewal,
-    driverLicense,
-    paused
-  ] = await controller.getAllCoreContracts();
+  const result = await controller.getAllCoreContracts();
+
+  const govAgency = result[0];
+  const vehicleRegistration = result[1];
+  const offenceAndRenewal = result[2];
+  const driverLicense = result[3];
+  const paused = result[4];
 
   console.log("GovAgency:", govAgency);
   console.log("VehicleRegistration:", vehicleRegistration);
@@ -56,7 +56,9 @@ async function main() {
   );
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

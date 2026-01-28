@@ -5,10 +5,10 @@ const { ethers, upgrades } = require("hardhat");
 async function main() {
   const VehicleRegistration = await ethers.getContractFactory("VehicleRegistration");
 
-  const proxy = await upgrades.deployProxy(VehicleRegistration, ["0x3Aa5ebB10DC797CAC828524e59A333d0A371443c"], { initializer: "initialize", kind: "uups" });
-  await proxy.waitForDeployment();
+  const proxy = await upgrades.deployProxy(VehicleRegistration, ["0xd7e05D8de832bc229BA6787E882bF83C2171774b"], { initializer: "initialize", kind: "uups" });
+  await proxy.deployed();
 
-  const proxyAddr = await proxy.getAddress();
+  const proxyAddr = await proxy.address;
   const implAddr = await upgrades.erc1967.getImplementationAddress(proxyAddr);
 
   console.log("VehicleRegistration Proxy:", proxyAddr);

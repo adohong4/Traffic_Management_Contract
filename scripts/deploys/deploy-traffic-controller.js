@@ -6,9 +6,9 @@ async function main() {
   const TrafficController = await ethers.getContractFactory("TrafficController");
 
   const proxy = await upgrades.deployProxy(TrafficController, [], { initializer: "initialize", kind: "uups" });
-  await proxy.waitForDeployment();
+  await proxy.deployed();
 
-  const proxyAddr = await proxy.getAddress();
+  const proxyAddr = await proxy.address;
   const implAddr = await upgrades.erc1967.getImplementationAddress(proxyAddr);
 
   console.log("TrafficController Proxy:", proxyAddr);
